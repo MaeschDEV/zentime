@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:zentime/logic/week.dart';
 
 class OverviewTab extends StatefulWidget {
   const OverviewTab({super.key});
@@ -97,7 +98,7 @@ class _OverviewTab extends State<OverviewTab> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  "Monday, 26.01.26",
+                                  getCurrentWeek()[0],
                                   style: theme.textTheme.bodyLarge,
                                 ),
                                 Row(
@@ -132,7 +133,7 @@ class _OverviewTab extends State<OverviewTab> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  "Tuesday, 27.01.26",
+                                  getCurrentWeek()[1],
                                   style: theme.textTheme.bodyLarge,
                                 ),
                                 Row(
@@ -172,7 +173,7 @@ class _OverviewTab extends State<OverviewTab> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  "Wednesday, 28.01.26",
+                                  getCurrentWeek()[2],
                                   style: theme.textTheme.bodyLarge,
                                 ),
                                 Row(
@@ -207,7 +208,7 @@ class _OverviewTab extends State<OverviewTab> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  "Thursday, 29.01.26",
+                                  getCurrentWeek()[3],
                                   style: theme.textTheme.bodyLarge,
                                 ),
                                 Row(
@@ -248,7 +249,7 @@ class _OverviewTab extends State<OverviewTab> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  "Friday, 30.01.26",
+                                  getCurrentWeek()[4],
                                   style: theme.textTheme.bodyLarge,
                                 ),
                                 Row(
