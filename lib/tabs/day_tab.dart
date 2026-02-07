@@ -26,6 +26,12 @@ class _DayTab extends State<DayTab> {
   late bool workEnabled;
 
   @override
+  void dispose() {
+    timer?.cancel();
+    super.dispose();
+  }
+
+  @override
   void initState() {
     super.initState();
 
@@ -45,7 +51,18 @@ class _DayTab extends State<DayTab> {
     _loadButtonState();
   }
 
-  void _getBox() async {
+  String _formatDuration(Duration d) {
+    final h = d.inHours.toString().padLeft(2, '0');
+    final m = (d.inMinutes.remainder(60)).toString().padLeft(2, '0');
+    final s = (d.inSeconds.remainder(60)).toString().padLeft(2, '0');
+    return '$h:$m:$s';
+  }
+
+  String _formatHours(double hours) {
+    return hours.toStringAsFixed(2);
+  }
+
+  Future<void> _getBox() async {
     box = await Hive.openBox<WorkDay>('workdays');
     now = DateTime.now();
     todayKey = "${now.year}-${now.month}-${now.day}";
@@ -53,8 +70,213 @@ class _DayTab extends State<DayTab> {
     workDay = box.get(todayKey);
   }
 
+  Future<Map<String, dynamic>> _getWorkedHours() async {
+    await _getBox();
+
+    Duration workedDuration = Duration.zero;
+    Duration breakDuration = Duration.zero;
+
+    if (workDay != null) {
+      for (final entry in workDay!.entries) {
+        final start = entry.start;
+        var end = entry.end;
+        // If entry appears to be ongoing (end == start), treat end as now
+        if (end.isAtSameMomentAs(start)) {
+          end = DateTime.now();
+        }
+
+        final duration = end.difference(start);
+
+        if (entry.type == EntryType.work) {
+          workedDuration += duration;
+        } else if (entry.type == EntryType.coffeeBreak) {
+          breakDuration += duration;
+        }
+      }
+    }
+
+    final workedHours = workedDuration.inMinutes / 60.0;
+    const targetHours = 8.0;
+    final remainingHours = (targetHours - workedHours).clamp(0.0, targetHours);
+    final progress = (workedHours / targetHours).clamp(0.0, 1.0);
+
+    return {
+      'workedHours': workedHours,
+      'remainingHours': remainingHours,
+      'progress': progress,
+      'workedDuration': workedDuration,
+      'breakDuration': breakDuration,
+      'dayType': workDay?.dayType ?? DayType.work,
+    };
+  }
+
+  Future<void> _handleBreak() async {
+    await _getBox();
+
+    // If no workday exists, create one with a break entry
+    if (workDay == null) {
+      final newWorkDay = WorkDay(
+        date: now,
+        dayType: DayType.work,
+        entries: [TimeEntry(type: EntryType.coffeeBreak, start: now, end: now)],
+      );
+      await box.put(todayKey, newWorkDay);
+    } else {
+      final entries = List<TimeEntry>.from(workDay!.entries);
+
+      // find last work entry index
+      int lastWorkIndex = -1;
+      for (int i = entries.length - 1; i >= 0; i--) {
+        if (entries[i].type == EntryType.work) {
+          lastWorkIndex = i;
+          break;
+        }
+      }
+
+      if (lastWorkIndex != -1) {
+        final last = entries[lastWorkIndex];
+        // replace last work entry with updated end = now
+        entries[lastWorkIndex] = TimeEntry(
+          type: last.type,
+          start: last.start,
+          end: now,
+        );
+      }
+
+      // append new break entry (start=end=now)
+      entries.add(TimeEntry(type: EntryType.coffeeBreak, start: now, end: now));
+
+      final updated = WorkDay(
+        date: workDay!.date,
+        dayType: workDay!.dayType,
+        entries: entries,
+      );
+
+      await box.put(todayKey, updated);
+    }
+
+    setState(() {
+      // after starting break, allow ending break via Work, keep checkout enabled
+      checkInEnabled = false;
+      checkOutEnabled = true;
+      breakEnabled = false;
+      workEnabled = true;
+    });
+  }
+
+  Future<void> _handleCheckIn() async {
+    await _getBox();
+
+    // Delete existing WorkDay for today
+    await box.delete(todayKey);
+
+    // Create new WorkDay with a Work entry starting now
+    final newWorkDay = WorkDay(
+      date: now,
+      dayType: DayType.work,
+      entries: [TimeEntry(type: EntryType.work, start: now, end: now)],
+    );
+
+    // Save the new WorkDay
+    await box.put(todayKey, newWorkDay);
+
+    // Update button states
+    setState(() {
+      checkInEnabled = false;
+      checkOutEnabled = true;
+      breakEnabled = true;
+      workEnabled = false;
+    });
+  }
+
+  Future<void> _handleCheckOut() async {
+    await _getBox();
+
+    if (workDay != null && workDay!.entries.isNotEmpty) {
+      final entries = List<TimeEntry>.from(workDay!.entries);
+      final lastIndex = entries.length - 1;
+      final last = entries[lastIndex];
+
+      // close the last entry by setting its end to now
+      entries[lastIndex] = TimeEntry(
+        type: last.type,
+        start: last.start,
+        end: now,
+      );
+
+      final updated = WorkDay(
+        date: workDay!.date,
+        dayType: workDay!.dayType,
+        entries: entries,
+      );
+
+      await box.put(todayKey, updated);
+    }
+
+    // after check-out, no action buttons except More should be available
+    setState(() {
+      checkInEnabled = false;
+      checkOutEnabled = false;
+      breakEnabled = false;
+      workEnabled = false;
+    });
+  }
+
+  Future<void> _handleWork() async {
+    await _getBox();
+
+    // If no workday exists, create one with a work entry
+    if (workDay == null) {
+      final newWorkDay = WorkDay(
+        date: now,
+        dayType: DayType.work,
+        entries: [TimeEntry(type: EntryType.work, start: now, end: now)],
+      );
+      await box.put(todayKey, newWorkDay);
+    } else {
+      final entries = List<TimeEntry>.from(workDay!.entries);
+
+      // find last break entry index
+      int lastBreakIndex = -1;
+      for (int i = entries.length - 1; i >= 0; i--) {
+        if (entries[i].type == EntryType.coffeeBreak) {
+          lastBreakIndex = i;
+          break;
+        }
+      }
+
+      if (lastBreakIndex != -1) {
+        final last = entries[lastBreakIndex];
+        // replace last break entry with updated end = now
+        entries[lastBreakIndex] = TimeEntry(
+          type: last.type,
+          start: last.start,
+          end: now,
+        );
+      }
+
+      // append new work entry (start=end=now)
+      entries.add(TimeEntry(type: EntryType.work, start: now, end: now));
+
+      final updated = WorkDay(
+        date: workDay!.date,
+        dayType: workDay!.dayType,
+        entries: entries,
+      );
+
+      await box.put(todayKey, updated);
+    }
+
+    setState(() {
+      checkInEnabled = false;
+      checkOutEnabled = true;
+      breakEnabled = true;
+      workEnabled = false;
+    });
+  }
+
   Future<void> _loadButtonState() async {
-    _getBox();
+    await _getBox();
 
     currentDayType = workDay?.dayType ?? DayType.work;
 
@@ -117,179 +339,8 @@ class _DayTab extends State<DayTab> {
     }
   }
 
-  @override
-  void dispose() {
-    timer?.cancel();
-    super.dispose();
-  }
-
-  Future<void> _handleCheckIn() async {
-    _getBox();
-
-    // Delete existing WorkDay for today
-    await box.delete(todayKey);
-
-    // Create new WorkDay with a Work entry starting now
-    final newWorkDay = WorkDay(
-      date: now,
-      dayType: DayType.work,
-      entries: [TimeEntry(type: EntryType.work, start: now, end: now)],
-    );
-
-    // Save the new WorkDay
-    await box.put(todayKey, newWorkDay);
-
-    // Update button states
-    setState(() {
-      checkInEnabled = false;
-      checkOutEnabled = true;
-      breakEnabled = true;
-      workEnabled = false;
-    });
-  }
-
-  Future<void> _handleBreak() async {
-    _getBox();
-
-    // If no workday exists, create one with a break entry
-    if (workDay == null) {
-      final newWorkDay = WorkDay(
-        date: now,
-        dayType: DayType.work,
-        entries: [TimeEntry(type: EntryType.coffeeBreak, start: now, end: now)],
-      );
-      await box.put(todayKey, newWorkDay);
-    } else {
-      final entries = List<TimeEntry>.from(workDay!.entries);
-
-      // find last work entry index
-      int lastWorkIndex = -1;
-      for (int i = entries.length - 1; i >= 0; i--) {
-        if (entries[i].type == EntryType.work) {
-          lastWorkIndex = i;
-          break;
-        }
-      }
-
-      if (lastWorkIndex != -1) {
-        final last = entries[lastWorkIndex];
-        // replace last work entry with updated end = now
-        entries[lastWorkIndex] = TimeEntry(
-          type: last.type,
-          start: last.start,
-          end: now,
-        );
-      }
-
-      // append new break entry (start=end=now)
-      entries.add(TimeEntry(type: EntryType.coffeeBreak, start: now, end: now));
-
-      final updated = WorkDay(
-        date: workDay!.date,
-        dayType: workDay!.dayType,
-        entries: entries,
-      );
-
-      await box.put(todayKey, updated);
-    }
-
-    setState(() {
-      // after starting break, allow ending break via Work, keep checkout enabled
-      checkInEnabled = false;
-      checkOutEnabled = true;
-      breakEnabled = false;
-      workEnabled = true;
-    });
-  }
-
-  Future<void> _handleWork() async {
-    _getBox();
-
-    // If no workday exists, create one with a work entry
-    if (workDay == null) {
-      final newWorkDay = WorkDay(
-        date: now,
-        dayType: DayType.work,
-        entries: [TimeEntry(type: EntryType.work, start: now, end: now)],
-      );
-      await box.put(todayKey, newWorkDay);
-    } else {
-      final entries = List<TimeEntry>.from(workDay!.entries);
-
-      // find last break entry index
-      int lastBreakIndex = -1;
-      for (int i = entries.length - 1; i >= 0; i--) {
-        if (entries[i].type == EntryType.coffeeBreak) {
-          lastBreakIndex = i;
-          break;
-        }
-      }
-
-      if (lastBreakIndex != -1) {
-        final last = entries[lastBreakIndex];
-        // replace last break entry with updated end = now
-        entries[lastBreakIndex] = TimeEntry(
-          type: last.type,
-          start: last.start,
-          end: now,
-        );
-      }
-
-      // append new work entry (start=end=now)
-      entries.add(TimeEntry(type: EntryType.work, start: now, end: now));
-
-      final updated = WorkDay(
-        date: workDay!.date,
-        dayType: workDay!.dayType,
-        entries: entries,
-      );
-
-      await box.put(todayKey, updated);
-    }
-
-    setState(() {
-      checkInEnabled = false;
-      checkOutEnabled = true;
-      breakEnabled = true;
-      workEnabled = false;
-    });
-  }
-
-  Future<void> _handleCheckOut() async {
-    _getBox();
-
-    if (workDay != null && workDay!.entries.isNotEmpty) {
-      final entries = List<TimeEntry>.from(workDay!.entries);
-      final lastIndex = entries.length - 1;
-      final last = entries[lastIndex];
-
-      // close the last entry by setting its end to now
-      entries[lastIndex] = TimeEntry(
-        type: last.type,
-        start: last.start,
-        end: now,
-      );
-
-      final updated = WorkDay(
-        date: workDay!.date,
-        dayType: workDay!.dayType,
-        entries: entries,
-      );
-
-      await box.put(todayKey, updated);
-    }
-
-    // after check-out, no action buttons except More should be available
-    setState(() {
-      checkInEnabled = false;
-      checkOutEnabled = false;
-      breakEnabled = false;
-      workEnabled = false;
-    });
-  }
-
   Future<void> _showEditDayDialog() async {
-    _getBox();
+    await _getBox();
 
     DayType current = workDay?.dayType ?? DayType.work;
 
@@ -393,57 +444,6 @@ class _DayTab extends State<DayTab> {
         );
       },
     );
-  }
-
-  Future<Map<String, dynamic>> _getWorkedHours() async {
-    _getBox();
-
-    Duration workedDuration = Duration.zero;
-    Duration breakDuration = Duration.zero;
-
-    if (workDay != null) {
-      for (final entry in workDay!.entries) {
-        final start = entry.start;
-        var end = entry.end;
-        // If entry appears to be ongoing (end == start), treat end as now
-        if (end.isAtSameMomentAs(start)) {
-          end = DateTime.now();
-        }
-
-        final duration = end.difference(start);
-
-        if (entry.type == EntryType.work) {
-          workedDuration += duration;
-        } else if (entry.type == EntryType.coffeeBreak) {
-          breakDuration += duration;
-        }
-      }
-    }
-
-    final workedHours = workedDuration.inMinutes / 60.0;
-    const targetHours = 8.0;
-    final remainingHours = (targetHours - workedHours).clamp(0.0, targetHours);
-    final progress = (workedHours / targetHours).clamp(0.0, 1.0);
-
-    return {
-      'workedHours': workedHours,
-      'remainingHours': remainingHours,
-      'progress': progress,
-      'workedDuration': workedDuration,
-      'breakDuration': breakDuration,
-      'dayType': workDay?.dayType ?? DayType.work,
-    };
-  }
-
-  String _formatHours(double hours) {
-    return hours.toStringAsFixed(2);
-  }
-
-  String _formatDuration(Duration d) {
-    final h = d.inHours.toString().padLeft(2, '0');
-    final m = (d.inMinutes.remainder(60)).toString().padLeft(2, '0');
-    final s = (d.inSeconds.remainder(60)).toString().padLeft(2, '0');
-    return '$h:$m:$s';
   }
 
   @override
