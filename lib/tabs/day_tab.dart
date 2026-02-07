@@ -18,6 +18,7 @@ class _DayTab extends State<DayTab> {
   late bool breakEnabled;
   late bool workEnabled;
   Timer? _timer;
+  late DayType currentDayType;
 
   @override
   void initState() {
@@ -26,6 +27,7 @@ class _DayTab extends State<DayTab> {
     checkOutEnabled = false;
     breakEnabled = false;
     workEnabled = false;
+    currentDayType = DayType.work;
     // start periodic refresh so UI updates automatically (every second)
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(() {});
@@ -41,14 +43,24 @@ class _DayTab extends State<DayTab> {
 
     final workDay = box.get(todayKey);
 
+    currentDayType = workDay?.dayType ?? DayType.work;
+
     if (workDay == null || workDay.entries.isEmpty) {
       // no entries: only Check-In (and More) available
       if (mounted) {
         setState(() {
-          checkInEnabled = true;
-          checkOutEnabled = false;
-          breakEnabled = false;
-          workEnabled = false;
+          // if day type is not work, disable all action buttons
+          if (currentDayType != DayType.work) {
+            checkInEnabled = false;
+            checkOutEnabled = false;
+            breakEnabled = false;
+            workEnabled = false;
+          } else {
+            checkInEnabled = true;
+            checkOutEnabled = false;
+            breakEnabled = false;
+            workEnabled = false;
+          }
         });
       }
       return;
@@ -64,7 +76,15 @@ class _DayTab extends State<DayTab> {
     }
 
     if (mounted) {
-      if (lastIsOngoing) {
+      if (currentDayType != DayType.work) {
+        // day is marked as non-work: disable all action buttons
+        setState(() {
+          checkInEnabled = false;
+          checkOutEnabled = false;
+          breakEnabled = false;
+          workEnabled = false;
+        });
+      } else if (lastIsOngoing) {
         // an entry is ongoing: allow checkout and toggling between work/break
         setState(() {
           checkInEnabled = false;
@@ -273,6 +293,112 @@ class _DayTab extends State<DayTab> {
     });
   }
 
+  Future<void> _showEditDayDialog() async {
+    final box = await Hive.openBox<WorkDay>('workdays');
+    final now = DateTime.now();
+    final todayKey = "${now.year}-${now.month}-${now.day}";
+
+    WorkDay? workDay = box.get(todayKey);
+    DayType current = workDay?.dayType ?? DayType.work;
+
+    await showDialog<void>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, dialogSetState) {
+            Future<void> setDayType(DayType t) async {
+              // update or create WorkDay with new dayType
+              final updated = workDay != null
+                  ? WorkDay(
+                      date: workDay!.date,
+                      dayType: t,
+                      entries: workDay!.entries,
+                    )
+                  : WorkDay(date: now, dayType: t, entries: []);
+              await box.put(todayKey, updated);
+              workDay = updated;
+              dialogSetState(() {
+                current = t;
+              });
+              if (mounted) {
+                // refresh button states
+                _loadButtonState();
+                setState(() {});
+              }
+            }
+
+            Widget statusButton(IconData icon, String label, DayType t) {
+              final isDisabled = current == t;
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6.0),
+                child: ElevatedButton.icon(
+                  onPressed: isDisabled ? null : () => setDayType(t),
+                  icon: Icon(icon),
+                  label: Text(label),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(44),
+                  ),
+                ),
+              );
+            }
+
+            return AlertDialog(
+              title: const Text('Edit this day'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    statusButton(Icons.work_rounded, 'Work', DayType.work),
+                    statusButton(Icons.sick_rounded, 'Sick', DayType.sick),
+                    statusButton(
+                      Icons.beach_access_rounded,
+                      'Holiday',
+                      DayType.holiday,
+                    ),
+                    statusButton(
+                      Icons.gavel_rounded,
+                      'Public Holiday',
+                      DayType.publicHoliday,
+                    ),
+                    const Divider(height: 16),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6.0),
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          await box.delete(todayKey);
+                          if (context.mounted) {
+                            Navigator.of(context).pop();
+                          }
+                          if (mounted) {
+                            _loadButtonState();
+                            setState(() {});
+                          }
+                        },
+                        icon: const Icon(Icons.delete_rounded),
+                        label: const Text('Reset this day'),
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(44),
+                          backgroundColor: Colors.red.shade100,
+                          foregroundColor: Colors.red.shade900,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Close'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   Future<Map<String, dynamic>> _getWorkedHours() async {
     final box = await Hive.openBox<WorkDay>('workdays');
 
@@ -314,6 +440,7 @@ class _DayTab extends State<DayTab> {
       'progress': progress,
       'workedDuration': workedDuration,
       'breakDuration': breakDuration,
+      'dayType': workDay?.dayType ?? DayType.work,
     };
   }
 
@@ -372,6 +499,36 @@ class _DayTab extends State<DayTab> {
                             builder: (context, snapshot) {
                               if (snapshot.hasData) {
                                 final data = snapshot.data!;
+                                final dayType = data['dayType'] as DayType;
+
+                                if (dayType != DayType.work) {
+                                  // show only the status text for non-work days
+                                  String label;
+                                  switch (dayType) {
+                                    case DayType.sick:
+                                      label = 'Sick';
+                                      break;
+                                    case DayType.holiday:
+                                      label = 'Holiday';
+                                      break;
+                                    case DayType.publicHoliday:
+                                      label = 'Public Holiday';
+                                      break;
+                                    default:
+                                      label = '';
+                                  }
+
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 8.0,
+                                    ),
+                                    child: Text(
+                                      label,
+                                      style: theme.textTheme.titleMedium,
+                                    ),
+                                  );
+                                }
+
                                 final workedHours =
                                     data['workedHours'] as double;
                                 final remainingHours =
@@ -453,9 +610,13 @@ class _DayTab extends State<DayTab> {
                 FutureBuilder<Map<String, dynamic>>(
                   future: hoursFuture,
                   builder: (context, snapshot) {
-                    final duration = snapshot.hasData
-                        ? snapshot.data!['workedDuration'] as Duration
-                        : Duration.zero;
+                    if (!snapshot.hasData) {
+                      return SizedBox.shrink();
+                    }
+                    final data = snapshot.data!;
+                    final dayType = data['dayType'] as DayType;
+                    if (dayType != DayType.work) return SizedBox.shrink();
+                    final duration = data['workedDuration'] as Duration;
                     return Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       spacing: 8,
@@ -476,9 +637,13 @@ class _DayTab extends State<DayTab> {
                 FutureBuilder<Map<String, dynamic>>(
                   future: hoursFuture,
                   builder: (context, snapshot) {
-                    final duration = snapshot.hasData
-                        ? snapshot.data!['breakDuration'] as Duration
-                        : Duration.zero;
+                    if (!snapshot.hasData) {
+                      return SizedBox.shrink();
+                    }
+                    final data = snapshot.data!;
+                    final dayType = data['dayType'] as DayType;
+                    if (dayType != DayType.work) return SizedBox.shrink();
+                    final duration = data['breakDuration'] as Duration;
                     return Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       spacing: 8,
@@ -622,7 +787,7 @@ class _DayTab extends State<DayTab> {
                           ),
                           elevation: 2,
                         ),
-                        onPressed: () {},
+                        onPressed: () => _showEditDayDialog(),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           spacing: 8,
