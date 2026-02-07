@@ -13,40 +13,53 @@ class DayTab extends StatefulWidget {
 }
 
 class _DayTab extends State<DayTab> {
+  Timer? timer;
+
+  late bool breakEnabled;
+  late Box<WorkDay> box;
   late bool checkInEnabled;
   late bool checkOutEnabled;
-  late bool breakEnabled;
-  late bool workEnabled;
-  Timer? _timer;
   late DayType currentDayType;
+  late DateTime now;
+  late String todayKey;
+  late WorkDay? workDay;
+  late bool workEnabled;
 
   @override
   void initState() {
     super.initState();
+
+    // initialize button states
     checkInEnabled = false;
     checkOutEnabled = false;
     breakEnabled = false;
     workEnabled = false;
     currentDayType = DayType.work;
+
     // start periodic refresh so UI updates automatically (every second)
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+    timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(() {});
     });
+
     // load persisted button state based on today's entries
     _loadButtonState();
   }
 
-  Future<void> _loadButtonState() async {
-    final box = await Hive.openBox<WorkDay>('workdays');
-    final now = DateTime.now();
-    final todayKey = "${now.year}-${now.month}-${now.day}";
+  void _getBox() async {
+    box = await Hive.openBox<WorkDay>('workdays');
+    now = DateTime.now();
+    todayKey = "${now.year}-${now.month}-${now.day}";
 
-    final workDay = box.get(todayKey);
+    workDay = box.get(todayKey);
+  }
+
+  Future<void> _loadButtonState() async {
+    _getBox();
 
     currentDayType = workDay?.dayType ?? DayType.work;
 
-    if (workDay == null || workDay.entries.isEmpty) {
-      // no entries: only Check-In (and More) available
+    if (workDay == null || workDay!.entries.isEmpty) {
+      // no entries -> Only Check-In enabled
       if (mounted) {
         setState(() {
           // if day type is not work, disable all action buttons
@@ -67,7 +80,7 @@ class _DayTab extends State<DayTab> {
     }
 
     // there is at least one entry
-    final entries = workDay.entries;
+    final entries = workDay!.entries;
     final last = entries.isNotEmpty ? entries.last : null;
 
     bool lastIsOngoing = false;
@@ -77,7 +90,7 @@ class _DayTab extends State<DayTab> {
 
     if (mounted) {
       if (currentDayType != DayType.work) {
-        // day is marked as non-work: disable all action buttons
+        // day type is not work, disable all action buttons
         setState(() {
           checkInEnabled = false;
           checkOutEnabled = false;
@@ -93,7 +106,7 @@ class _DayTab extends State<DayTab> {
           workEnabled = last != null && last.type == EntryType.coffeeBreak;
         });
       } else {
-        // last entry already closed: no action buttons (only More)
+        // last entry already closed: no action buttons
         setState(() {
           checkInEnabled = false;
           checkOutEnabled = false;
@@ -106,15 +119,12 @@ class _DayTab extends State<DayTab> {
 
   @override
   void dispose() {
-    _timer?.cancel();
+    timer?.cancel();
     super.dispose();
   }
 
   Future<void> _handleCheckIn() async {
-    final box = await Hive.openBox<WorkDay>('workdays');
-
-    final now = DateTime.now();
-    final todayKey = "${now.year}-${now.month}-${now.day}";
+    _getBox();
 
     // Delete existing WorkDay for today
     await box.delete(todayKey);
@@ -139,12 +149,7 @@ class _DayTab extends State<DayTab> {
   }
 
   Future<void> _handleBreak() async {
-    final box = await Hive.openBox<WorkDay>('workdays');
-
-    final now = DateTime.now();
-    final todayKey = "${now.year}-${now.month}-${now.day}";
-
-    final workDay = box.get(todayKey);
+    _getBox();
 
     // If no workday exists, create one with a break entry
     if (workDay == null) {
@@ -155,7 +160,7 @@ class _DayTab extends State<DayTab> {
       );
       await box.put(todayKey, newWorkDay);
     } else {
-      final entries = List<TimeEntry>.from(workDay.entries);
+      final entries = List<TimeEntry>.from(workDay!.entries);
 
       // find last work entry index
       int lastWorkIndex = -1;
@@ -180,8 +185,8 @@ class _DayTab extends State<DayTab> {
       entries.add(TimeEntry(type: EntryType.coffeeBreak, start: now, end: now));
 
       final updated = WorkDay(
-        date: workDay.date,
-        dayType: workDay.dayType,
+        date: workDay!.date,
+        dayType: workDay!.dayType,
         entries: entries,
       );
 
@@ -198,12 +203,7 @@ class _DayTab extends State<DayTab> {
   }
 
   Future<void> _handleWork() async {
-    final box = await Hive.openBox<WorkDay>('workdays');
-
-    final now = DateTime.now();
-    final todayKey = "${now.year}-${now.month}-${now.day}";
-
-    final workDay = box.get(todayKey);
+    _getBox();
 
     // If no workday exists, create one with a work entry
     if (workDay == null) {
@@ -214,7 +214,7 @@ class _DayTab extends State<DayTab> {
       );
       await box.put(todayKey, newWorkDay);
     } else {
-      final entries = List<TimeEntry>.from(workDay.entries);
+      final entries = List<TimeEntry>.from(workDay!.entries);
 
       // find last break entry index
       int lastBreakIndex = -1;
@@ -239,8 +239,8 @@ class _DayTab extends State<DayTab> {
       entries.add(TimeEntry(type: EntryType.work, start: now, end: now));
 
       final updated = WorkDay(
-        date: workDay.date,
-        dayType: workDay.dayType,
+        date: workDay!.date,
+        dayType: workDay!.dayType,
         entries: entries,
       );
 
@@ -256,15 +256,10 @@ class _DayTab extends State<DayTab> {
   }
 
   Future<void> _handleCheckOut() async {
-    final box = await Hive.openBox<WorkDay>('workdays');
+    _getBox();
 
-    final now = DateTime.now();
-    final todayKey = "${now.year}-${now.month}-${now.day}";
-
-    final workDay = box.get(todayKey);
-
-    if (workDay != null && workDay.entries.isNotEmpty) {
-      final entries = List<TimeEntry>.from(workDay.entries);
+    if (workDay != null && workDay!.entries.isNotEmpty) {
+      final entries = List<TimeEntry>.from(workDay!.entries);
       final lastIndex = entries.length - 1;
       final last = entries[lastIndex];
 
@@ -276,8 +271,8 @@ class _DayTab extends State<DayTab> {
       );
 
       final updated = WorkDay(
-        date: workDay.date,
-        dayType: workDay.dayType,
+        date: workDay!.date,
+        dayType: workDay!.dayType,
         entries: entries,
       );
 
@@ -294,11 +289,8 @@ class _DayTab extends State<DayTab> {
   }
 
   Future<void> _showEditDayDialog() async {
-    final box = await Hive.openBox<WorkDay>('workdays');
-    final now = DateTime.now();
-    final todayKey = "${now.year}-${now.month}-${now.day}";
+    _getBox();
 
-    WorkDay? workDay = box.get(todayKey);
     DayType current = workDay?.dayType ?? DayType.work;
 
     await showDialog<void>(
@@ -378,8 +370,12 @@ class _DayTab extends State<DayTab> {
                         label: const Text('Reset this day'),
                         style: ElevatedButton.styleFrom(
                           minimumSize: const Size.fromHeight(44),
-                          backgroundColor: Colors.red.shade100,
-                          foregroundColor: Colors.red.shade900,
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.errorContainer,
+                          foregroundColor: Theme.of(
+                            context,
+                          ).colorScheme.onErrorContainer,
                         ),
                       ),
                     ),
@@ -400,18 +396,13 @@ class _DayTab extends State<DayTab> {
   }
 
   Future<Map<String, dynamic>> _getWorkedHours() async {
-    final box = await Hive.openBox<WorkDay>('workdays');
-
-    final now = DateTime.now();
-    final todayKey = "${now.year}-${now.month}-${now.day}";
-
-    final workDay = box.get(todayKey);
+    _getBox();
 
     Duration workedDuration = Duration.zero;
     Duration breakDuration = Duration.zero;
 
     if (workDay != null) {
-      for (final entry in workDay.entries) {
+      for (final entry in workDay!.entries) {
         final start = entry.start;
         var end = entry.end;
         // If entry appears to be ongoing (end == start), treat end as now
