@@ -26,15 +26,7 @@ List<String> getCurrentWeek() {
   final daysFromMonday = now.weekday - 1;
   final monday = now.subtract(Duration(days: daysFromMonday));
 
-  final dayNames = [
-    'Monday',
-    'Tuesday',
-    'Wednesday',
-    'Thursday',
-    'Friday',
-    'Saturday',
-    'Sunday',
-  ];
+  final dayNames = ['Mon.', 'Tue.', 'Wed.', 'Thu.', 'Fri.', 'Sat.', 'Sun.'];
 
   final week = <String>[];
 

@@ -100,25 +100,25 @@ class _DayTab extends State<DayTab> {
 
     switch (DateTime.now().weekday) {
       case 1:
-        targetHours = settingsBox.get('current')!.mondayWorkHours;
+        targetHours = settingsBox.get('current')?.mondayWorkHours ?? 8.0;
         break;
       case 2:
-        targetHours = settingsBox.get('current')!.tuesdayWorkHours;
+        targetHours = settingsBox.get('current')?.tuesdayWorkHours ?? 8.0;
         break;
       case 3:
-        targetHours = settingsBox.get('current')!.wednesdayWorkHours;
+        targetHours = settingsBox.get('current')?.wednesdayWorkHours ?? 8.0;
         break;
       case 4:
-        targetHours = settingsBox.get('current')!.thursdayWorkHours;
+        targetHours = settingsBox.get('current')?.thursdayWorkHours ?? 8.0;
         break;
       case 5:
-        targetHours = settingsBox.get('current')!.fridayWorkHours;
+        targetHours = settingsBox.get('current')?.fridayWorkHours ?? 8.0;
         break;
       case 6:
-        targetHours = settingsBox.get('current')!.saturdayWorkHours;
+        targetHours = settingsBox.get('current')?.saturdayWorkHours ?? 0.0;
         break;
       case 7:
-        targetHours = settingsBox.get('current')!.sundayWorkHours;
+        targetHours = settingsBox.get('current')?.sundayWorkHours ?? 0.0;
         break;
       default:
         targetHours = 100;
@@ -134,7 +134,7 @@ class _DayTab extends State<DayTab> {
       progress = (workedHours / targetHours).clamp(0.0, 1.0);
     }
 
-    if (workedHours >= settingsBox.get('current')!.maxDailyWorkHours &&
+    if (workedHours >= (settingsBox.get('current')?.maxDailyWorkHours ?? 10) &&
         checkInEnabled) {
       _handleCheckOut();
     }
