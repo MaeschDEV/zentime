@@ -67,7 +67,13 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: <Widget>[OverviewTab(), DayTab(), SettingsTab()][currentPageIndex],
+      body: SafeArea(
+        child: <Widget>[
+          OverviewTab(),
+          DayTab(),
+          SettingsTab(),
+        ][currentPageIndex],
+      ),
     );
   }
 }
