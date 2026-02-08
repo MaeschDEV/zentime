@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive_ce_flutter/adapters.dart';
+import 'package:zentime/logic/settings.dart';
 import 'package:zentime/logic/workday.dart';
 import 'package:zentime/screens/home_screen.dart';
 
@@ -11,6 +12,9 @@ void main() async {
   Hive.registerAdapter(EntryTypeAdapter());
   Hive.registerAdapter(TimeEntryAdapter());
   Hive.registerAdapter(WorkDayAdapter());
+  Hive.registerAdapter(SettingsAdapter());
+
+  await Hive.openBox<Settings>('settingsBox');
 
   runApp(const MyApp());
 }

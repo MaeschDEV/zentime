@@ -3,12 +3,14 @@
 // Check in to version control
 
 import 'package:hive_ce/hive_ce.dart';
+import 'package:zentime/logic/settings.dart';
 import 'package:zentime/logic/workday.dart';
 
 extension HiveRegistrar on HiveInterface {
   void registerAdapters() {
     registerAdapter(DayTypeAdapter());
     registerAdapter(EntryTypeAdapter());
+    registerAdapter(SettingsAdapter());
     registerAdapter(TimeEntryAdapter());
     registerAdapter(WorkDayAdapter());
   }
@@ -18,6 +20,7 @@ extension IsolatedHiveRegistrar on IsolatedHiveInterface {
   void registerAdapters() {
     registerAdapter(DayTypeAdapter());
     registerAdapter(EntryTypeAdapter());
+    registerAdapter(SettingsAdapter());
     registerAdapter(TimeEntryAdapter());
     registerAdapter(WorkDayAdapter());
   }
