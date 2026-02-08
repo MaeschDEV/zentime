@@ -124,778 +124,802 @@ class _OverviewTab extends State<OverviewTab> {
         elevation: 1,
         margin: EdgeInsets.zero,
         child: SizedBox(
+          height: double.infinity,
           child: Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Column(
-              spacing: 8,
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                Text("Overview", style: theme.textTheme.titleLarge),
-                Card.outlined(
-                  elevation: 2,
-                  child: SizedBox(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        spacing: 16,
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            spacing: 16,
-                            children: [
-                              Icon(Icons.schedule_rounded),
-                              Text(
-                                "Recorded this week",
-                                style: theme.textTheme.bodyLarge,
-                              ),
-                            ],
-                          ),
-                          FutureBuilder<Map<String, dynamic>>(
-                            future: weeklyFuture,
-                            builder: (context, snapshot) {
-                              if (snapshot.hasData) {
-                                final data = snapshot.data!;
-                                final workedHours =
-                                    data['workedHours'] as double;
-                                final remainingHours =
-                                    data['remainingHours'] as double;
-                                final progress = data['progress'] as double;
-                                final targetHours =
-                                    data['targetHours'] as double;
+            child: SingleChildScrollView(
+              child: Column(
+                spacing: 8,
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Text("Overview", style: theme.textTheme.titleLarge),
+                  Card.outlined(
+                    elevation: 2,
+                    child: SizedBox(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          spacing: 16,
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              spacing: 16,
+                              children: [
+                                Icon(Icons.schedule_rounded),
+                                Text(
+                                  "Recorded this week",
+                                  style: theme.textTheme.bodyLarge,
+                                ),
+                              ],
+                            ),
+                            FutureBuilder<Map<String, dynamic>>(
+                              future: weeklyFuture,
+                              builder: (context, snapshot) {
+                                if (snapshot.hasData) {
+                                  final data = snapshot.data!;
+                                  final workedHours =
+                                      data['workedHours'] as double;
+                                  final remainingHours =
+                                      data['remainingHours'] as double;
+                                  final progress = data['progress'] as double;
+                                  final targetHours =
+                                      data['targetHours'] as double;
 
-                                return Column(
-                                  spacing: 8,
-                                  children: [
-                                    Row(
-                                      spacing: 8,
-                                      children: [
-                                        Text(
-                                          _formatHours(workedHours),
-                                          style: theme.textTheme.bodyLarge,
-                                        ),
-                                        Text(
-                                          "/",
-                                          style: theme.textTheme.bodyLarge,
-                                        ),
-                                        Text(
-                                          _formatHours(targetHours),
-                                          style: theme.textTheme.bodyLarge,
-                                        ),
-                                      ],
-                                    ),
-                                    LinearProgressIndicator(value: progress),
-                                    Row(
-                                      children: [
-                                        Text(
-                                          _formatHours(remainingHours),
-                                          style: theme.textTheme.bodyMedium,
-                                        ),
-                                        Text(
-                                          " hours remaining",
-                                          style: theme.textTheme.bodyMedium,
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                );
-                              } else if (snapshot.hasError) {
-                                return Text('Error loading weekly hours');
-                              } else {
-                                return Column(
-                                  spacing: 8,
-                                  children: [
-                                    LinearProgressIndicator(),
-                                    Text(
-                                      "Loading...",
-                                      style: theme.textTheme.bodyMedium,
-                                    ),
-                                  ],
-                                );
-                              }
-                            },
-                          ),
-                        ],
+                                  return Column(
+                                    spacing: 8,
+                                    children: [
+                                      Row(
+                                        spacing: 8,
+                                        children: [
+                                          Text(
+                                            _formatHours(workedHours),
+                                            style: theme.textTheme.bodyLarge,
+                                          ),
+                                          Text(
+                                            "/",
+                                            style: theme.textTheme.bodyLarge,
+                                          ),
+                                          Text(
+                                            _formatHours(targetHours),
+                                            style: theme.textTheme.bodyLarge,
+                                          ),
+                                        ],
+                                      ),
+                                      LinearProgressIndicator(value: progress),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            _formatHours(remainingHours),
+                                            style: theme.textTheme.bodyMedium,
+                                          ),
+                                          Text(
+                                            " hours remaining",
+                                            style: theme.textTheme.bodyMedium,
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  );
+                                } else if (snapshot.hasError) {
+                                  return Text('Error loading weekly hours');
+                                } else {
+                                  return Column(
+                                    spacing: 8,
+                                    children: [
+                                      LinearProgressIndicator(),
+                                      Text(
+                                        "Loading...",
+                                        style: theme.textTheme.bodyMedium,
+                                      ),
+                                    ],
+                                  );
+                                }
+                              },
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-                Row(
-                  spacing: 8,
-                  children: [
-                    Expanded(
-                      child: Card.outlined(
-                        elevation: 2,
-                        child: SizedBox(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              spacing: 16,
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  getCurrentWeek()[0],
-                                  style: theme.textTheme.bodyLarge,
-                                ),
-                                FutureBuilder<Map<String, dynamic>>(
-                                  future: weeklyFuture,
-                                  builder: (context, snapshot) {
-                                    if (snapshot.hasData) {
-                                      final data = snapshot.data!;
-                                      final dayType =
-                                          data['dayTypes'][0] as DayType;
+                  Row(
+                    spacing: 8,
+                    children: [
+                      Expanded(
+                        child: Card.outlined(
+                          elevation: 2,
+                          child: SizedBox(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                spacing: 16,
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    getCurrentWeek()[0],
+                                    style: theme.textTheme.bodyLarge,
+                                  ),
+                                  FutureBuilder<Map<String, dynamic>>(
+                                    future: weeklyFuture,
+                                    builder: (context, snapshot) {
+                                      if (snapshot.hasData) {
+                                        final data = snapshot.data!;
+                                        final dayType =
+                                            data['dayTypes'][0] as DayType;
 
-                                      if (dayType != DayType.work) {
-                                        // show only the status text for non-work days
-                                        String label;
-                                        switch (dayType) {
-                                          case DayType.sick:
-                                            label = 'Sick';
-                                            break;
-                                          case DayType.holiday:
-                                            label = 'Holiday';
-                                            break;
-                                          case DayType.publicHoliday:
-                                            label = 'Public Holiday';
-                                            break;
-                                          default:
-                                            label = '';
+                                        if (dayType != DayType.work) {
+                                          // show only the status text for non-work days
+                                          String label;
+                                          switch (dayType) {
+                                            case DayType.sick:
+                                              label = 'Sick';
+                                              break;
+                                            case DayType.holiday:
+                                              label = 'Holiday';
+                                              break;
+                                            case DayType.publicHoliday:
+                                              label = 'Public Holiday';
+                                              break;
+                                            default:
+                                              label = '';
+                                          }
+
+                                          return Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 8.0,
+                                            ),
+                                            child: Text(
+                                              label,
+                                              style:
+                                                  theme.textTheme.titleMedium,
+                                            ),
+                                          );
                                         }
 
-                                        return Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                            vertical: 8.0,
-                                          ),
-                                          child: Text(
-                                            label,
-                                            style: theme.textTheme.titleMedium,
-                                          ),
+                                        final dailyHours =
+                                            data['dailyHours'] as List<double>;
+
+                                        return Row(
+                                          spacing: 8,
+                                          children: [
+                                            Text(
+                                              _formatHours(dailyHours[0]),
+                                              style: theme.textTheme.bodyLarge,
+                                            ),
+                                            Text(
+                                              "/",
+                                              style: theme.textTheme.bodyLarge,
+                                            ),
+                                            Text(
+                                              "8.00",
+                                              style: theme.textTheme.bodyLarge,
+                                            ),
+                                          ],
+                                        );
+                                      } else if (snapshot.hasError) {
+                                        return Text(
+                                          'Error loading weekly hours',
+                                        );
+                                      } else {
+                                        return Column(
+                                          spacing: 8,
+                                          children: [
+                                            LinearProgressIndicator(),
+                                            Text(
+                                              "Loading...",
+                                              style: theme.textTheme.bodyMedium,
+                                            ),
+                                          ],
                                         );
                                       }
-
-                                      final dailyHours =
-                                          data['dailyHours'] as List<double>;
-
-                                      return Row(
-                                        spacing: 8,
-                                        children: [
-                                          Text(
-                                            _formatHours(dailyHours[0]),
-                                            style: theme.textTheme.bodyLarge,
-                                          ),
-                                          Text(
-                                            "/",
-                                            style: theme.textTheme.bodyLarge,
-                                          ),
-                                          Text(
-                                            "8.00",
-                                            style: theme.textTheme.bodyLarge,
-                                          ),
-                                        ],
-                                      );
-                                    } else if (snapshot.hasError) {
-                                      return Text('Error loading weekly hours');
-                                    } else {
-                                      return Column(
-                                        spacing: 8,
-                                        children: [
-                                          LinearProgressIndicator(),
-                                          Text(
-                                            "Loading...",
-                                            style: theme.textTheme.bodyMedium,
-                                          ),
-                                        ],
-                                      );
-                                    }
-                                  },
-                                ),
-                              ],
+                                    },
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                    Expanded(
-                      child: Card.outlined(
-                        elevation: 2,
-                        child: SizedBox(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              spacing: 16,
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  getCurrentWeek()[1],
-                                  style: theme.textTheme.bodyLarge,
-                                ),
-                                FutureBuilder<Map<String, dynamic>>(
-                                  future: weeklyFuture,
-                                  builder: (context, snapshot) {
-                                    if (snapshot.hasData) {
-                                      final data = snapshot.data!;
-                                      final dayType =
-                                          data['dayTypes'][1] as DayType;
+                      Expanded(
+                        child: Card.outlined(
+                          elevation: 2,
+                          child: SizedBox(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                spacing: 16,
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    getCurrentWeek()[1],
+                                    style: theme.textTheme.bodyLarge,
+                                  ),
+                                  FutureBuilder<Map<String, dynamic>>(
+                                    future: weeklyFuture,
+                                    builder: (context, snapshot) {
+                                      if (snapshot.hasData) {
+                                        final data = snapshot.data!;
+                                        final dayType =
+                                            data['dayTypes'][1] as DayType;
 
-                                      if (dayType != DayType.work) {
-                                        // show only the status text for non-work days
-                                        String label;
-                                        switch (dayType) {
-                                          case DayType.sick:
-                                            label = 'Sick';
-                                            break;
-                                          case DayType.holiday:
-                                            label = 'Holiday';
-                                            break;
-                                          case DayType.publicHoliday:
-                                            label = 'Public Holiday';
-                                            break;
-                                          default:
-                                            label = '';
+                                        if (dayType != DayType.work) {
+                                          // show only the status text for non-work days
+                                          String label;
+                                          switch (dayType) {
+                                            case DayType.sick:
+                                              label = 'Sick';
+                                              break;
+                                            case DayType.holiday:
+                                              label = 'Holiday';
+                                              break;
+                                            case DayType.publicHoliday:
+                                              label = 'Public Holiday';
+                                              break;
+                                            default:
+                                              label = '';
+                                          }
+
+                                          return Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 8.0,
+                                            ),
+                                            child: Text(
+                                              label,
+                                              style:
+                                                  theme.textTheme.titleMedium,
+                                            ),
+                                          );
                                         }
 
-                                        return Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                            vertical: 8.0,
-                                          ),
-                                          child: Text(
-                                            label,
-                                            style: theme.textTheme.titleMedium,
-                                          ),
+                                        final dailyHours =
+                                            data['dailyHours'] as List<double>;
+
+                                        return Row(
+                                          spacing: 8,
+                                          children: [
+                                            Text(
+                                              _formatHours(dailyHours[1]),
+                                              style: theme.textTheme.bodyLarge,
+                                            ),
+                                            Text(
+                                              "/",
+                                              style: theme.textTheme.bodyLarge,
+                                            ),
+                                            Text(
+                                              "8.00",
+                                              style: theme.textTheme.bodyLarge,
+                                            ),
+                                          ],
+                                        );
+                                      } else if (snapshot.hasError) {
+                                        return Text(
+                                          'Error loading weekly hours',
+                                        );
+                                      } else {
+                                        return Column(
+                                          spacing: 8,
+                                          children: [
+                                            LinearProgressIndicator(),
+                                            Text(
+                                              "Loading...",
+                                              style: theme.textTheme.bodyMedium,
+                                            ),
+                                          ],
                                         );
                                       }
-
-                                      final dailyHours =
-                                          data['dailyHours'] as List<double>;
-
-                                      return Row(
-                                        spacing: 8,
-                                        children: [
-                                          Text(
-                                            _formatHours(dailyHours[1]),
-                                            style: theme.textTheme.bodyLarge,
-                                          ),
-                                          Text(
-                                            "/",
-                                            style: theme.textTheme.bodyLarge,
-                                          ),
-                                          Text(
-                                            "8.00",
-                                            style: theme.textTheme.bodyLarge,
-                                          ),
-                                        ],
-                                      );
-                                    } else if (snapshot.hasError) {
-                                      return Text('Error loading weekly hours');
-                                    } else {
-                                      return Column(
-                                        spacing: 8,
-                                        children: [
-                                          LinearProgressIndicator(),
-                                          Text(
-                                            "Loading...",
-                                            style: theme.textTheme.bodyMedium,
-                                          ),
-                                        ],
-                                      );
-                                    }
-                                  },
-                                ),
-                              ],
+                                    },
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                Row(
-                  spacing: 8,
-                  children: [
-                    Expanded(
-                      child: Card.outlined(
-                        elevation: 2,
-                        child: SizedBox(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              spacing: 16,
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  getCurrentWeek()[2],
-                                  style: theme.textTheme.bodyLarge,
-                                ),
-                                FutureBuilder<Map<String, dynamic>>(
-                                  future: weeklyFuture,
-                                  builder: (context, snapshot) {
-                                    if (snapshot.hasData) {
-                                      final data = snapshot.data!;
-                                      final dayType =
-                                          data['dayTypes'][2] as DayType;
+                    ],
+                  ),
+                  Row(
+                    spacing: 8,
+                    children: [
+                      Expanded(
+                        child: Card.outlined(
+                          elevation: 2,
+                          child: SizedBox(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                spacing: 16,
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    getCurrentWeek()[2],
+                                    style: theme.textTheme.bodyLarge,
+                                  ),
+                                  FutureBuilder<Map<String, dynamic>>(
+                                    future: weeklyFuture,
+                                    builder: (context, snapshot) {
+                                      if (snapshot.hasData) {
+                                        final data = snapshot.data!;
+                                        final dayType =
+                                            data['dayTypes'][2] as DayType;
 
-                                      if (dayType != DayType.work) {
-                                        // show only the status text for non-work days
-                                        String label;
-                                        switch (dayType) {
-                                          case DayType.sick:
-                                            label = 'Sick';
-                                            break;
-                                          case DayType.holiday:
-                                            label = 'Holiday';
-                                            break;
-                                          case DayType.publicHoliday:
-                                            label = 'Public Holiday';
-                                            break;
-                                          default:
-                                            label = '';
+                                        if (dayType != DayType.work) {
+                                          // show only the status text for non-work days
+                                          String label;
+                                          switch (dayType) {
+                                            case DayType.sick:
+                                              label = 'Sick';
+                                              break;
+                                            case DayType.holiday:
+                                              label = 'Holiday';
+                                              break;
+                                            case DayType.publicHoliday:
+                                              label = 'Public Holiday';
+                                              break;
+                                            default:
+                                              label = '';
+                                          }
+
+                                          return Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 8.0,
+                                            ),
+                                            child: Text(
+                                              label,
+                                              style:
+                                                  theme.textTheme.titleMedium,
+                                            ),
+                                          );
                                         }
 
-                                        return Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                            vertical: 8.0,
-                                          ),
-                                          child: Text(
-                                            label,
-                                            style: theme.textTheme.titleMedium,
-                                          ),
+                                        final dailyHours =
+                                            data['dailyHours'] as List<double>;
+
+                                        return Row(
+                                          spacing: 8,
+                                          children: [
+                                            Text(
+                                              _formatHours(dailyHours[2]),
+                                              style: theme.textTheme.bodyLarge,
+                                            ),
+                                            Text(
+                                              "/",
+                                              style: theme.textTheme.bodyLarge,
+                                            ),
+                                            Text(
+                                              "8.00",
+                                              style: theme.textTheme.bodyLarge,
+                                            ),
+                                          ],
+                                        );
+                                      } else if (snapshot.hasError) {
+                                        return Text(
+                                          'Error loading weekly hours',
+                                        );
+                                      } else {
+                                        return Column(
+                                          spacing: 8,
+                                          children: [
+                                            LinearProgressIndicator(),
+                                            Text(
+                                              "Loading...",
+                                              style: theme.textTheme.bodyMedium,
+                                            ),
+                                          ],
                                         );
                                       }
-
-                                      final dailyHours =
-                                          data['dailyHours'] as List<double>;
-
-                                      return Row(
-                                        spacing: 8,
-                                        children: [
-                                          Text(
-                                            _formatHours(dailyHours[2]),
-                                            style: theme.textTheme.bodyLarge,
-                                          ),
-                                          Text(
-                                            "/",
-                                            style: theme.textTheme.bodyLarge,
-                                          ),
-                                          Text(
-                                            "8.00",
-                                            style: theme.textTheme.bodyLarge,
-                                          ),
-                                        ],
-                                      );
-                                    } else if (snapshot.hasError) {
-                                      return Text('Error loading weekly hours');
-                                    } else {
-                                      return Column(
-                                        spacing: 8,
-                                        children: [
-                                          LinearProgressIndicator(),
-                                          Text(
-                                            "Loading...",
-                                            style: theme.textTheme.bodyMedium,
-                                          ),
-                                        ],
-                                      );
-                                    }
-                                  },
-                                ),
-                              ],
+                                    },
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                    Expanded(
-                      child: Card.outlined(
-                        elevation: 2,
-                        child: SizedBox(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              spacing: 16,
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  getCurrentWeek()[3],
-                                  style: theme.textTheme.bodyLarge,
-                                ),
-                                FutureBuilder<Map<String, dynamic>>(
-                                  future: weeklyFuture,
-                                  builder: (context, snapshot) {
-                                    if (snapshot.hasData) {
-                                      final data = snapshot.data!;
-                                      final dayType =
-                                          data['dayTypes'][3] as DayType;
+                      Expanded(
+                        child: Card.outlined(
+                          elevation: 2,
+                          child: SizedBox(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                spacing: 16,
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    getCurrentWeek()[3],
+                                    style: theme.textTheme.bodyLarge,
+                                  ),
+                                  FutureBuilder<Map<String, dynamic>>(
+                                    future: weeklyFuture,
+                                    builder: (context, snapshot) {
+                                      if (snapshot.hasData) {
+                                        final data = snapshot.data!;
+                                        final dayType =
+                                            data['dayTypes'][3] as DayType;
 
-                                      if (dayType != DayType.work) {
-                                        // show only the status text for non-work days
-                                        String label;
-                                        switch (dayType) {
-                                          case DayType.sick:
-                                            label = 'Sick';
-                                            break;
-                                          case DayType.holiday:
-                                            label = 'Holiday';
-                                            break;
-                                          case DayType.publicHoliday:
-                                            label = 'Public Holiday';
-                                            break;
-                                          default:
-                                            label = '';
+                                        if (dayType != DayType.work) {
+                                          // show only the status text for non-work days
+                                          String label;
+                                          switch (dayType) {
+                                            case DayType.sick:
+                                              label = 'Sick';
+                                              break;
+                                            case DayType.holiday:
+                                              label = 'Holiday';
+                                              break;
+                                            case DayType.publicHoliday:
+                                              label = 'Public Holiday';
+                                              break;
+                                            default:
+                                              label = '';
+                                          }
+
+                                          return Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 8.0,
+                                            ),
+                                            child: Text(
+                                              label,
+                                              style:
+                                                  theme.textTheme.titleMedium,
+                                            ),
+                                          );
                                         }
 
-                                        return Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                            vertical: 8.0,
-                                          ),
-                                          child: Text(
-                                            label,
-                                            style: theme.textTheme.titleMedium,
-                                          ),
+                                        final dailyHours =
+                                            data['dailyHours'] as List<double>;
+
+                                        return Row(
+                                          spacing: 8,
+                                          children: [
+                                            Text(
+                                              _formatHours(dailyHours[3]),
+                                              style: theme.textTheme.bodyLarge,
+                                            ),
+                                            Text(
+                                              "/",
+                                              style: theme.textTheme.bodyLarge,
+                                            ),
+                                            Text(
+                                              "8.00",
+                                              style: theme.textTheme.bodyLarge,
+                                            ),
+                                          ],
+                                        );
+                                      } else if (snapshot.hasError) {
+                                        return Text(
+                                          'Error loading weekly hours',
+                                        );
+                                      } else {
+                                        return Column(
+                                          spacing: 8,
+                                          children: [
+                                            LinearProgressIndicator(),
+                                            Text(
+                                              "Loading...",
+                                              style: theme.textTheme.bodyMedium,
+                                            ),
+                                          ],
                                         );
                                       }
-
-                                      final dailyHours =
-                                          data['dailyHours'] as List<double>;
-
-                                      return Row(
-                                        spacing: 8,
-                                        children: [
-                                          Text(
-                                            _formatHours(dailyHours[3]),
-                                            style: theme.textTheme.bodyLarge,
-                                          ),
-                                          Text(
-                                            "/",
-                                            style: theme.textTheme.bodyLarge,
-                                          ),
-                                          Text(
-                                            "8.00",
-                                            style: theme.textTheme.bodyLarge,
-                                          ),
-                                        ],
-                                      );
-                                    } else if (snapshot.hasError) {
-                                      return Text('Error loading weekly hours');
-                                    } else {
-                                      return Column(
-                                        spacing: 8,
-                                        children: [
-                                          LinearProgressIndicator(),
-                                          Text(
-                                            "Loading...",
-                                            style: theme.textTheme.bodyMedium,
-                                          ),
-                                        ],
-                                      );
-                                    }
-                                  },
-                                ),
-                              ],
+                                    },
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                Row(
-                  spacing: 8,
-                  children: [
-                    Expanded(
-                      flex: 1,
-                      child: Card.outlined(
-                        elevation: 2,
-                        child: SizedBox(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              spacing: 16,
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  getCurrentWeek()[4],
-                                  style: theme.textTheme.bodyLarge,
-                                ),
-                                FutureBuilder<Map<String, dynamic>>(
-                                  future: weeklyFuture,
-                                  builder: (context, snapshot) {
-                                    if (snapshot.hasData) {
-                                      final data = snapshot.data!;
-                                      final dayType =
-                                          data['dayTypes'][4] as DayType;
+                    ],
+                  ),
+                  Row(
+                    spacing: 8,
+                    children: [
+                      Expanded(
+                        flex: 1,
+                        child: Card.outlined(
+                          elevation: 2,
+                          child: SizedBox(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                spacing: 16,
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    getCurrentWeek()[4],
+                                    style: theme.textTheme.bodyLarge,
+                                  ),
+                                  FutureBuilder<Map<String, dynamic>>(
+                                    future: weeklyFuture,
+                                    builder: (context, snapshot) {
+                                      if (snapshot.hasData) {
+                                        final data = snapshot.data!;
+                                        final dayType =
+                                            data['dayTypes'][4] as DayType;
 
-                                      if (dayType != DayType.work) {
-                                        // show only the status text for non-work days
-                                        String label;
-                                        switch (dayType) {
-                                          case DayType.sick:
-                                            label = 'Sick';
-                                            break;
-                                          case DayType.holiday:
-                                            label = 'Holiday';
-                                            break;
-                                          case DayType.publicHoliday:
-                                            label = 'Public Holiday';
-                                            break;
-                                          default:
-                                            label = '';
+                                        if (dayType != DayType.work) {
+                                          // show only the status text for non-work days
+                                          String label;
+                                          switch (dayType) {
+                                            case DayType.sick:
+                                              label = 'Sick';
+                                              break;
+                                            case DayType.holiday:
+                                              label = 'Holiday';
+                                              break;
+                                            case DayType.publicHoliday:
+                                              label = 'Public Holiday';
+                                              break;
+                                            default:
+                                              label = '';
+                                          }
+
+                                          return Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 8.0,
+                                            ),
+                                            child: Text(
+                                              label,
+                                              style:
+                                                  theme.textTheme.titleMedium,
+                                            ),
+                                          );
                                         }
 
-                                        return Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                            vertical: 8.0,
-                                          ),
-                                          child: Text(
-                                            label,
-                                            style: theme.textTheme.titleMedium,
-                                          ),
+                                        final dailyHours =
+                                            data['dailyHours'] as List<double>;
+
+                                        return Row(
+                                          spacing: 8,
+                                          children: [
+                                            Text(
+                                              _formatHours(dailyHours[4]),
+                                              style: theme.textTheme.bodyLarge,
+                                            ),
+                                            Text(
+                                              "/",
+                                              style: theme.textTheme.bodyLarge,
+                                            ),
+                                            Text(
+                                              "8.00",
+                                              style: theme.textTheme.bodyLarge,
+                                            ),
+                                          ],
+                                        );
+                                      } else if (snapshot.hasError) {
+                                        return Text(
+                                          'Error loading weekly hours',
+                                        );
+                                      } else {
+                                        return Column(
+                                          spacing: 8,
+                                          children: [
+                                            LinearProgressIndicator(),
+                                            Text(
+                                              "Loading...",
+                                              style: theme.textTheme.bodyMedium,
+                                            ),
+                                          ],
                                         );
                                       }
-
-                                      final dailyHours =
-                                          data['dailyHours'] as List<double>;
-
-                                      return Row(
-                                        spacing: 8,
-                                        children: [
-                                          Text(
-                                            _formatHours(dailyHours[4]),
-                                            style: theme.textTheme.bodyLarge,
-                                          ),
-                                          Text(
-                                            "/",
-                                            style: theme.textTheme.bodyLarge,
-                                          ),
-                                          Text(
-                                            "8.00",
-                                            style: theme.textTheme.bodyLarge,
-                                          ),
-                                        ],
-                                      );
-                                    } else if (snapshot.hasError) {
-                                      return Text('Error loading weekly hours');
-                                    } else {
-                                      return Column(
-                                        spacing: 8,
-                                        children: [
-                                          LinearProgressIndicator(),
-                                          Text(
-                                            "Loading...",
-                                            style: theme.textTheme.bodyMedium,
-                                          ),
-                                        ],
-                                      );
-                                    }
-                                  },
-                                ),
-                              ],
+                                    },
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                    Expanded(
-                      flex: 1,
-                      child: Card.outlined(
-                        elevation: 2,
-                        child: SizedBox(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              spacing: 16,
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  getCurrentWeek()[5],
-                                  style: theme.textTheme.bodyLarge,
-                                ),
-                                FutureBuilder<Map<String, dynamic>>(
-                                  future: weeklyFuture,
-                                  builder: (context, snapshot) {
-                                    if (snapshot.hasData) {
-                                      final data = snapshot.data!;
-                                      final dayType =
-                                          data['dayTypes'][5] as DayType;
+                      Expanded(
+                        flex: 1,
+                        child: Card.outlined(
+                          elevation: 2,
+                          child: SizedBox(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                spacing: 16,
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    getCurrentWeek()[5],
+                                    style: theme.textTheme.bodyLarge,
+                                  ),
+                                  FutureBuilder<Map<String, dynamic>>(
+                                    future: weeklyFuture,
+                                    builder: (context, snapshot) {
+                                      if (snapshot.hasData) {
+                                        final data = snapshot.data!;
+                                        final dayType =
+                                            data['dayTypes'][5] as DayType;
 
-                                      if (dayType != DayType.work) {
-                                        // show only the status text for non-work days
-                                        String label;
-                                        switch (dayType) {
-                                          case DayType.sick:
-                                            label = 'Sick';
-                                            break;
-                                          case DayType.holiday:
-                                            label = 'Holiday';
-                                            break;
-                                          case DayType.publicHoliday:
-                                            label = 'Public Holiday';
-                                            break;
-                                          default:
-                                            label = '';
+                                        if (dayType != DayType.work) {
+                                          // show only the status text for non-work days
+                                          String label;
+                                          switch (dayType) {
+                                            case DayType.sick:
+                                              label = 'Sick';
+                                              break;
+                                            case DayType.holiday:
+                                              label = 'Holiday';
+                                              break;
+                                            case DayType.publicHoliday:
+                                              label = 'Public Holiday';
+                                              break;
+                                            default:
+                                              label = '';
+                                          }
+
+                                          return Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 8.0,
+                                            ),
+                                            child: Text(
+                                              label,
+                                              style:
+                                                  theme.textTheme.titleMedium,
+                                            ),
+                                          );
                                         }
 
-                                        return Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                            vertical: 8.0,
-                                          ),
-                                          child: Text(
-                                            label,
-                                            style: theme.textTheme.titleMedium,
-                                          ),
+                                        final dailyHours =
+                                            data['dailyHours'] as List<double>;
+
+                                        return Row(
+                                          spacing: 8,
+                                          children: [
+                                            Text(
+                                              _formatHours(dailyHours[5]),
+                                              style: theme.textTheme.bodyLarge,
+                                            ),
+                                            Text(
+                                              "/",
+                                              style: theme.textTheme.bodyLarge,
+                                            ),
+                                            Text(
+                                              "0.00",
+                                              style: theme.textTheme.bodyLarge,
+                                            ),
+                                          ],
+                                        );
+                                      } else if (snapshot.hasError) {
+                                        return Text(
+                                          'Error loading weekly hours',
+                                        );
+                                      } else {
+                                        return Column(
+                                          spacing: 8,
+                                          children: [
+                                            LinearProgressIndicator(),
+                                            Text(
+                                              "Loading...",
+                                              style: theme.textTheme.bodyMedium,
+                                            ),
+                                          ],
                                         );
                                       }
-
-                                      final dailyHours =
-                                          data['dailyHours'] as List<double>;
-
-                                      return Row(
-                                        spacing: 8,
-                                        children: [
-                                          Text(
-                                            _formatHours(dailyHours[5]),
-                                            style: theme.textTheme.bodyLarge,
-                                          ),
-                                          Text(
-                                            "/",
-                                            style: theme.textTheme.bodyLarge,
-                                          ),
-                                          Text(
-                                            "0.00",
-                                            style: theme.textTheme.bodyLarge,
-                                          ),
-                                        ],
-                                      );
-                                    } else if (snapshot.hasError) {
-                                      return Text('Error loading weekly hours');
-                                    } else {
-                                      return Column(
-                                        spacing: 8,
-                                        children: [
-                                          LinearProgressIndicator(),
-                                          Text(
-                                            "Loading...",
-                                            style: theme.textTheme.bodyMedium,
-                                          ),
-                                        ],
-                                      );
-                                    }
-                                  },
-                                ),
-                              ],
+                                    },
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                Row(
-                  spacing: 8,
-                  children: [
-                    Expanded(
-                      flex: 1,
-                      child: Card.outlined(
-                        elevation: 2,
-                        child: SizedBox(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              spacing: 16,
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  getCurrentWeek()[6],
-                                  style: theme.textTheme.bodyLarge,
-                                ),
-                                FutureBuilder<Map<String, dynamic>>(
-                                  future: weeklyFuture,
-                                  builder: (context, snapshot) {
-                                    if (snapshot.hasData) {
-                                      final data = snapshot.data!;
-                                      final dayType =
-                                          data['dayTypes'][6] as DayType;
+                    ],
+                  ),
+                  Row(
+                    spacing: 8,
+                    children: [
+                      Expanded(
+                        flex: 1,
+                        child: Card.outlined(
+                          elevation: 2,
+                          child: SizedBox(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                spacing: 16,
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    getCurrentWeek()[6],
+                                    style: theme.textTheme.bodyLarge,
+                                  ),
+                                  FutureBuilder<Map<String, dynamic>>(
+                                    future: weeklyFuture,
+                                    builder: (context, snapshot) {
+                                      if (snapshot.hasData) {
+                                        final data = snapshot.data!;
+                                        final dayType =
+                                            data['dayTypes'][6] as DayType;
 
-                                      if (dayType != DayType.work) {
-                                        // show only the status text for non-work days
-                                        String label;
-                                        switch (dayType) {
-                                          case DayType.sick:
-                                            label = 'Sick';
-                                            break;
-                                          case DayType.holiday:
-                                            label = 'Holiday';
-                                            break;
-                                          case DayType.publicHoliday:
-                                            label = 'Public Holiday';
-                                            break;
-                                          default:
-                                            label = '';
+                                        if (dayType != DayType.work) {
+                                          // show only the status text for non-work days
+                                          String label;
+                                          switch (dayType) {
+                                            case DayType.sick:
+                                              label = 'Sick';
+                                              break;
+                                            case DayType.holiday:
+                                              label = 'Holiday';
+                                              break;
+                                            case DayType.publicHoliday:
+                                              label = 'Public Holiday';
+                                              break;
+                                            default:
+                                              label = '';
+                                          }
+
+                                          return Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 8.0,
+                                            ),
+                                            child: Text(
+                                              label,
+                                              style:
+                                                  theme.textTheme.titleMedium,
+                                            ),
+                                          );
                                         }
 
-                                        return Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                            vertical: 8.0,
-                                          ),
-                                          child: Text(
-                                            label,
-                                            style: theme.textTheme.titleMedium,
-                                          ),
+                                        final dailyHours =
+                                            data['dailyHours'] as List<double>;
+
+                                        return Row(
+                                          spacing: 8,
+                                          children: [
+                                            Text(
+                                              _formatHours(dailyHours[6]),
+                                              style: theme.textTheme.bodyLarge,
+                                            ),
+                                            Text(
+                                              "/",
+                                              style: theme.textTheme.bodyLarge,
+                                            ),
+                                            Text(
+                                              "0.00",
+                                              style: theme.textTheme.bodyLarge,
+                                            ),
+                                          ],
+                                        );
+                                      } else if (snapshot.hasError) {
+                                        return Text(
+                                          'Error loading weekly hours',
+                                        );
+                                      } else {
+                                        return Column(
+                                          spacing: 8,
+                                          children: [
+                                            LinearProgressIndicator(),
+                                            Text(
+                                              "Loading...",
+                                              style: theme.textTheme.bodyMedium,
+                                            ),
+                                          ],
                                         );
                                       }
-
-                                      final dailyHours =
-                                          data['dailyHours'] as List<double>;
-
-                                      return Row(
-                                        spacing: 8,
-                                        children: [
-                                          Text(
-                                            _formatHours(dailyHours[6]),
-                                            style: theme.textTheme.bodyLarge,
-                                          ),
-                                          Text(
-                                            "/",
-                                            style: theme.textTheme.bodyLarge,
-                                          ),
-                                          Text(
-                                            "0.00",
-                                            style: theme.textTheme.bodyLarge,
-                                          ),
-                                        ],
-                                      );
-                                    } else if (snapshot.hasError) {
-                                      return Text('Error loading weekly hours');
-                                    } else {
-                                      return Column(
-                                        spacing: 8,
-                                        children: [
-                                          LinearProgressIndicator(),
-                                          Text(
-                                            "Loading...",
-                                            style: theme.textTheme.bodyMedium,
-                                          ),
-                                        ],
-                                      );
-                                    }
-                                  },
-                                ),
-                              ],
+                                    },
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                    Spacer(),
-                  ],
-                ),
-              ],
+                      Spacer(),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
