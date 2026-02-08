@@ -1,5 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:hive_ce_flutter/adapters.dart';
 import 'package:zentime/logic/week.dart';
+import 'package:zentime/logic/workday.dart';
 
 class OverviewTab extends StatefulWidget {
   const OverviewTab({super.key});
@@ -9,9 +13,74 @@ class OverviewTab extends StatefulWidget {
 }
 
 class _OverviewTab extends State<OverviewTab> {
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    // start periodic refresh so UI updates automatically (every second)
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  Future<Map<String, dynamic>> _getWeeklyWorkedHours() async {
+    final box = await Hive.openBox<WorkDay>('workdays');
+
+    final now = DateTime.now();
+    final daysFromMonday = now.weekday - 1;
+    final monday = now.subtract(Duration(days: daysFromMonday));
+
+    Duration totalWorkedDuration = Duration.zero;
+
+    // Loop through each day of the week (Monday to Sunday)
+    for (int i = 0; i < 7; i++) {
+      final day = monday.add(Duration(days: i));
+      final dayKey = "${day.year}-${day.month}-${day.day}";
+      final workDay = box.get(dayKey);
+
+      if (workDay != null) {
+        for (final entry in workDay.entries) {
+          if (entry.type == EntryType.work) {
+            final start = entry.start;
+            var end = entry.end;
+            // If entry appears to be ongoing (end == start), treat end as now
+            if (end.isAtSameMomentAs(start)) {
+              end = DateTime.now();
+            }
+            final duration = end.difference(start);
+            totalWorkedDuration += duration;
+          }
+        }
+      }
+    }
+
+    final workedHours = totalWorkedDuration.inMinutes / 60.0;
+    const targetHours = 40.0;
+    final remainingHours = (targetHours - workedHours).clamp(0.0, targetHours);
+    final progress = (workedHours / targetHours).clamp(0.0, 1.0);
+
+    return {
+      'workedHours': workedHours,
+      'remainingHours': remainingHours,
+      'progress': progress,
+    };
+  }
+
+  String _formatHours(double hours) {
+    return hours.toStringAsFixed(2);
+  }
+
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final weeklyFuture = _getWeeklyWorkedHours();
 
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -46,37 +115,67 @@ class _OverviewTab extends State<OverviewTab> {
                               ),
                             ],
                           ),
-                          Column(
-                            spacing: 8,
-                            children: [
-                              Row(
-                                spacing: 8,
-                                children: [
-                                  Text(
-                                    "0.00",
-                                    style: theme.textTheme.bodyLarge,
-                                  ),
-                                  Text("/", style: theme.textTheme.bodyLarge),
-                                  Text(
-                                    "40.00",
-                                    style: theme.textTheme.bodyLarge,
-                                  ),
-                                ],
-                              ),
-                              LinearProgressIndicator(
-                                year2023: false,
-                                value: 0.25,
-                              ),
-                            ],
-                          ),
-                          Row(
-                            children: [
-                              Text("40.00", style: theme.textTheme.bodyMedium),
-                              Text(
-                                " hours remaining",
-                                style: theme.textTheme.bodyMedium,
-                              ),
-                            ],
+                          FutureBuilder<Map<String, dynamic>>(
+                            future: weeklyFuture,
+                            builder: (context, snapshot) {
+                              if (snapshot.hasData) {
+                                final data = snapshot.data!;
+                                final workedHours =
+                                    data['workedHours'] as double;
+                                final remainingHours =
+                                    data['remainingHours'] as double;
+                                final progress = data['progress'] as double;
+
+                                return Column(
+                                  spacing: 8,
+                                  children: [
+                                    Row(
+                                      spacing: 8,
+                                      children: [
+                                        Text(
+                                          _formatHours(workedHours),
+                                          style: theme.textTheme.bodyLarge,
+                                        ),
+                                        Text(
+                                          "/",
+                                          style: theme.textTheme.bodyLarge,
+                                        ),
+                                        Text(
+                                          "40.00",
+                                          style: theme.textTheme.bodyLarge,
+                                        ),
+                                      ],
+                                    ),
+                                    LinearProgressIndicator(value: progress),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          _formatHours(remainingHours),
+                                          style: theme.textTheme.bodyMedium,
+                                        ),
+                                        Text(
+                                          " hours remaining",
+                                          style: theme.textTheme.bodyMedium,
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                );
+                              } else if (snapshot.hasError) {
+                                return Text('Error loading weekly hours');
+                              } else {
+                                return Column(
+                                  spacing: 8,
+                                  children: [
+                                    LinearProgressIndicator(),
+                                    Text(
+                                      "Loading...",
+                                      style: theme.textTheme.bodyMedium,
+                                    ),
+                                  ],
+                                );
+                              }
+                            },
                           ),
                         ],
                       ),
