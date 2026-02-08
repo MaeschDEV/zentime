@@ -100,6 +100,10 @@ class _DayTab extends State<DayTab> {
     final remainingHours = (targetHours - workedHours).clamp(0.0, targetHours);
     final progress = (workedHours / targetHours).clamp(0.0, 1.0);
 
+    if (workedHours >= 10 && checkInEnabled) {
+      _handleCheckOut();
+    }
+
     return {
       'workedHours': workedHours,
       'remainingHours': remainingHours,
