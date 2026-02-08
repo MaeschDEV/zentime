@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:hive_ce_flutter/adapters.dart';
+import 'package:zentime/logic/settings.dart';
 import 'package:zentime/logic/week.dart';
 import 'package:zentime/logic/workday.dart';
 
@@ -72,9 +73,11 @@ class _DayTab extends State<DayTab> {
 
   Future<Map<String, dynamic>> _getWorkedHours() async {
     await _getBox();
+    final settingsBox = await Hive.openBox<Settings>('settingsBox');
 
     Duration workedDuration = Duration.zero;
     Duration breakDuration = Duration.zero;
+    double targetHours = 8.0;
 
     if (workDay != null) {
       for (final entry in workDay!.entries) {
@@ -95,12 +98,44 @@ class _DayTab extends State<DayTab> {
       }
     }
 
-    final workedHours = workedDuration.inMinutes / 60.0;
-    const targetHours = 8.0;
-    final remainingHours = (targetHours - workedHours).clamp(0.0, targetHours);
-    final progress = (workedHours / targetHours).clamp(0.0, 1.0);
+    switch (DateTime.now().weekday) {
+      case 1:
+        targetHours = settingsBox.get('current')!.mondayWorkHours;
+        break;
+      case 2:
+        targetHours = settingsBox.get('current')!.tuesdayWorkHours;
+        break;
+      case 3:
+        targetHours = settingsBox.get('current')!.wednesdayWorkHours;
+        break;
+      case 4:
+        targetHours = settingsBox.get('current')!.thursdayWorkHours;
+        break;
+      case 5:
+        targetHours = settingsBox.get('current')!.fridayWorkHours;
+        break;
+      case 6:
+        targetHours = settingsBox.get('current')!.saturdayWorkHours;
+        break;
+      case 7:
+        targetHours = settingsBox.get('current')!.sundayWorkHours;
+        break;
+      default:
+        targetHours = 100;
+        break;
+    }
 
-    if (workedHours >= 10 && checkInEnabled) {
+    final workedHours = workedDuration.inMinutes / 60.0;
+    final remainingHours = (targetHours - workedHours).clamp(0.0, targetHours);
+
+    double progress = 0.0;
+
+    if (targetHours != 0) {
+      progress = (workedHours / targetHours).clamp(0.0, 1.0);
+    }
+
+    if (workedHours >= settingsBox.get('current')!.maxDailyWorkHours &&
+        checkInEnabled) {
       _handleCheckOut();
     }
 
@@ -111,6 +146,7 @@ class _DayTab extends State<DayTab> {
       'workedDuration': workedDuration,
       'breakDuration': breakDuration,
       'dayType': workDay?.dayType ?? DayType.work,
+      'targetHours': targetHours,
     };
   }
 
@@ -531,6 +567,8 @@ class _DayTab extends State<DayTab> {
                                   final remainingHours =
                                       data['remainingHours'] as double;
                                   final progress = data['progress'] as double;
+                                  final targetHours =
+                                      data['targetHours'] as double;
 
                                   return Column(
                                     spacing: 8,
@@ -547,7 +585,7 @@ class _DayTab extends State<DayTab> {
                                             style: theme.textTheme.bodyLarge,
                                           ),
                                           Text(
-                                            "8.00",
+                                            _formatHours(targetHours),
                                             style: theme.textTheme.bodyLarge,
                                           ),
                                         ],
@@ -568,7 +606,7 @@ class _DayTab extends State<DayTab> {
                                     ],
                                   );
                                 } else if (snapshot.hasError) {
-                                  return Text('Error loading work hours');
+                                  return Text(snapshot.stackTrace.toString());
                                 } else {
                                   return Column(
                                     spacing: 8,

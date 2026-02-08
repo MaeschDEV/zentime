@@ -2,7 +2,7 @@ import 'package:hive_ce_flutter/adapters.dart';
 
 part 'settings.g.dart';
 
-@HiveType(typeId: 0)
+@HiveType(typeId: 4)
 class Settings extends HiveObject {
   @HiveField(0)
   final double weeklyWorkHours;

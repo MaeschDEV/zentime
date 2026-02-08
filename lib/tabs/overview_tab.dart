@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:hive_ce_flutter/adapters.dart';
+import 'package:zentime/logic/settings.dart';
 import 'package:zentime/logic/week.dart';
 import 'package:zentime/logic/workday.dart';
 
@@ -32,16 +33,18 @@ class _OverviewTab extends State<OverviewTab> {
 
   Future<Map<String, dynamic>> _getWeeklyWorkedHours() async {
     final box = await Hive.openBox<WorkDay>('workdays');
+    final settingsBox = await Hive.openBox<Settings>('settingsBox');
 
     final now = DateTime.now();
     final daysFromMonday = now.weekday - 1;
     final monday = now.subtract(Duration(days: daysFromMonday));
 
     Duration totalWorkedDuration = Duration.zero;
-    double targetHours = 40.0;
+    double targetHours = settingsBox.get('current')?.weeklyWorkHours ?? 40.0;
     List<Duration> dailyDurations = List.filled(7, Duration.zero);
     List<double> dailyHours = List.filled(7, 0.0);
     List<DayType> dayTypes = List.filled(7, DayType.work);
+    List<double> dailyTargetHours = List.filled(7, 8.0);
 
     // Loop through each day of the week (Monday to Sunday)
     for (int i = 0; i < 7; i++) {
@@ -65,24 +68,29 @@ class _OverviewTab extends State<OverviewTab> {
         }
       }
 
+      dailyTargetHours[0] = settingsBox.get('current')?.mondayWorkHours ?? 8.0;
+      dailyTargetHours[1] = settingsBox.get('current')?.tuesdayWorkHours ?? 8.0;
+      dailyTargetHours[2] =
+          settingsBox.get('current')?.wednesdayWorkHours ?? 8.0;
+      dailyTargetHours[3] =
+          settingsBox.get('current')?.thursdayWorkHours ?? 8.0;
+      dailyTargetHours[4] = settingsBox.get('current')?.fridayWorkHours ?? 8.0;
+      dailyTargetHours[5] =
+          settingsBox.get('current')?.saturdayWorkHours ?? 0.0;
+      dailyTargetHours[6] = settingsBox.get('current')?.sundayWorkHours ?? 0.0;
+
       switch (workDay?.dayType) {
         case DayType.publicHoliday:
           dayTypes[i] = DayType.publicHoliday;
 
-          if (i < 5) {
-            targetHours -= 8.0;
-          }
+          targetHours -= dailyTargetHours[i];
           break;
         case DayType.holiday:
           dayTypes[i] = DayType.holiday;
-          if (i < 5) {
-            targetHours -= 8.0;
-          }
+          targetHours -= dailyTargetHours[i];
           break;
         case DayType.sick:
-          if (i < 5) {
-            targetHours -= 8.0;
-          }
+          targetHours -= dailyTargetHours[i];
           dayTypes[i] = DayType.sick;
           break;
         default:
@@ -106,6 +114,7 @@ class _OverviewTab extends State<OverviewTab> {
       'dayTypes': dayTypes,
       'remainingHours': remainingHours,
       'progress': progress,
+      'dailyTargetHours': dailyTargetHours,
     };
   }
 
@@ -279,6 +288,9 @@ class _OverviewTab extends State<OverviewTab> {
 
                                         final dailyHours =
                                             data['dailyHours'] as List<double>;
+                                        final targetHours =
+                                            data['dailyTargetHours']
+                                                as List<double>;
 
                                         return Row(
                                           spacing: 8,
@@ -292,7 +304,7 @@ class _OverviewTab extends State<OverviewTab> {
                                               style: theme.textTheme.bodyLarge,
                                             ),
                                             Text(
-                                              "8.00",
+                                              _formatHours(targetHours[0]),
                                               style: theme.textTheme.bodyLarge,
                                             ),
                                           ],
@@ -375,6 +387,9 @@ class _OverviewTab extends State<OverviewTab> {
 
                                         final dailyHours =
                                             data['dailyHours'] as List<double>;
+                                        final targetHours =
+                                            data['dailyTargetHours']
+                                                as List<double>;
 
                                         return Row(
                                           spacing: 8,
@@ -388,7 +403,7 @@ class _OverviewTab extends State<OverviewTab> {
                                               style: theme.textTheme.bodyLarge,
                                             ),
                                             Text(
-                                              "8.00",
+                                              _formatHours(targetHours[1]),
                                               style: theme.textTheme.bodyLarge,
                                             ),
                                           ],
@@ -476,6 +491,9 @@ class _OverviewTab extends State<OverviewTab> {
 
                                         final dailyHours =
                                             data['dailyHours'] as List<double>;
+                                        final targetHours =
+                                            data['dailyTargetHours']
+                                                as List<double>;
 
                                         return Row(
                                           spacing: 8,
@@ -489,7 +507,7 @@ class _OverviewTab extends State<OverviewTab> {
                                               style: theme.textTheme.bodyLarge,
                                             ),
                                             Text(
-                                              "8.00",
+                                              _formatHours(targetHours[2]),
                                               style: theme.textTheme.bodyLarge,
                                             ),
                                           ],
@@ -572,6 +590,9 @@ class _OverviewTab extends State<OverviewTab> {
 
                                         final dailyHours =
                                             data['dailyHours'] as List<double>;
+                                        final targetHours =
+                                            data['dailyTargetHours']
+                                                as List<double>;
 
                                         return Row(
                                           spacing: 8,
@@ -585,7 +606,7 @@ class _OverviewTab extends State<OverviewTab> {
                                               style: theme.textTheme.bodyLarge,
                                             ),
                                             Text(
-                                              "8.00",
+                                              _formatHours(targetHours[3]),
                                               style: theme.textTheme.bodyLarge,
                                             ),
                                           ],
@@ -674,6 +695,9 @@ class _OverviewTab extends State<OverviewTab> {
 
                                         final dailyHours =
                                             data['dailyHours'] as List<double>;
+                                        final targetHours =
+                                            data['dailyTargetHours']
+                                                as List<double>;
 
                                         return Row(
                                           spacing: 8,
@@ -687,7 +711,7 @@ class _OverviewTab extends State<OverviewTab> {
                                               style: theme.textTheme.bodyLarge,
                                             ),
                                             Text(
-                                              "8.00",
+                                              _formatHours(targetHours[4]),
                                               style: theme.textTheme.bodyLarge,
                                             ),
                                           ],
@@ -771,6 +795,9 @@ class _OverviewTab extends State<OverviewTab> {
 
                                         final dailyHours =
                                             data['dailyHours'] as List<double>;
+                                        final targetHours =
+                                            data['dailyTargetHours']
+                                                as List<double>;
 
                                         return Row(
                                           spacing: 8,
@@ -784,7 +811,7 @@ class _OverviewTab extends State<OverviewTab> {
                                               style: theme.textTheme.bodyLarge,
                                             ),
                                             Text(
-                                              "0.00",
+                                              _formatHours(targetHours[5]),
                                               style: theme.textTheme.bodyLarge,
                                             ),
                                           ],
@@ -873,6 +900,9 @@ class _OverviewTab extends State<OverviewTab> {
 
                                         final dailyHours =
                                             data['dailyHours'] as List<double>;
+                                        final targetHours =
+                                            data['dailyTargetHours']
+                                                as List<double>;
 
                                         return Row(
                                           spacing: 8,
@@ -886,7 +916,7 @@ class _OverviewTab extends State<OverviewTab> {
                                               style: theme.textTheme.bodyLarge,
                                             ),
                                             Text(
-                                              "0.00",
+                                              _formatHours(targetHours[6]),
                                               style: theme.textTheme.bodyLarge,
                                             ),
                                           ],
