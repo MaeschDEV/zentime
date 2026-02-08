@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class SettingsTab extends StatefulWidget {
   const SettingsTab({super.key});
@@ -24,9 +25,21 @@ class _SettingsTab extends State<SettingsTab> {
             padding: const EdgeInsets.all(16.0),
             child: SingleChildScrollView(
               child: Column(
-                spacing: 8,
+                spacing: 32,
                 mainAxisAlignment: MainAxisAlignment.start,
-                children: [Text("Settings", style: theme.textTheme.titleLarge)],
+                children: [
+                  Text("Settings", style: theme.textTheme.titleLarge),
+                  Column(
+                    spacing: 8,
+                    children: [
+                      Icon(Icons.sentiment_very_dissatisfied_rounded, size: 64),
+                      Text(
+                        "This site is still under construction.",
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ),
