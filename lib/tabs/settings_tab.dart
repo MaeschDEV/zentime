@@ -120,7 +120,7 @@ class _SettingsTab extends State<SettingsTab> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            "Arbeitszeit-Einstellungen",
+                            "Working time settings",
                             style: Theme.of(context).textTheme.bodyLarge,
                           ),
                           const SizedBox(height: 16),
@@ -138,11 +138,9 @@ class _SettingsTab extends State<SettingsTab> {
                                 children: [
                                   // Wöchentliche Stunden nur noch als Anzeige
                                   ListTile(
-                                    title: const Text(
-                                      "Wöchentliche Arbeitsstunden",
-                                    ),
+                                    title: const Text("Weekly working hours"),
                                     subtitle: const Text(
-                                      "Automatisch berechnet aus Mo-So",
+                                      "Automatically calculated from Mon-Sun",
                                     ),
                                     trailing: Text(
                                       "${settings.weeklyWorkHours.toStringAsFixed(1)} h",
@@ -154,7 +152,7 @@ class _SettingsTab extends State<SettingsTab> {
                                     ),
                                   ),
                                   _buildNumberField(
-                                    label: "Max. tägliche Arbeitsstunden",
+                                    label: "Max. daily working hours",
                                     value: settings.maxDailyWorkHours,
                                     onChanged: (val) => _updateSettings(
                                       box,
@@ -164,7 +162,7 @@ class _SettingsTab extends State<SettingsTab> {
                                   ),
                                   const Divider(),
                                   _buildNumberField(
-                                    label: "Montag",
+                                    label: "Monday",
                                     value: settings.mondayWorkHours,
                                     onChanged: (val) => _updateSettings(
                                       box,
@@ -173,7 +171,7 @@ class _SettingsTab extends State<SettingsTab> {
                                     ),
                                   ),
                                   _buildNumberField(
-                                    label: "Dienstag",
+                                    label: "Tuesday",
                                     value: settings.tuesdayWorkHours,
                                     onChanged: (val) => _updateSettings(
                                       box,
@@ -182,7 +180,7 @@ class _SettingsTab extends State<SettingsTab> {
                                     ),
                                   ),
                                   _buildNumberField(
-                                    label: "Mittwoch",
+                                    label: "Wednesday",
                                     value: settings.wednesdayWorkHours,
                                     onChanged: (val) => _updateSettings(
                                       box,
@@ -191,7 +189,7 @@ class _SettingsTab extends State<SettingsTab> {
                                     ),
                                   ),
                                   _buildNumberField(
-                                    label: "Donnerstag",
+                                    label: "Thursday",
                                     value: settings.thursdayWorkHours,
                                     onChanged: (val) => _updateSettings(
                                       box,
@@ -200,7 +198,7 @@ class _SettingsTab extends State<SettingsTab> {
                                     ),
                                   ),
                                   _buildNumberField(
-                                    label: "Freitag",
+                                    label: "Friday",
                                     value: settings.fridayWorkHours,
                                     onChanged: (val) => _updateSettings(
                                       box,
@@ -209,7 +207,7 @@ class _SettingsTab extends State<SettingsTab> {
                                     ),
                                   ),
                                   _buildNumberField(
-                                    label: "Samstag",
+                                    label: "Saturday",
                                     value: settings.saturdayWorkHours,
                                     onChanged: (val) => _updateSettings(
                                       box,
@@ -218,7 +216,7 @@ class _SettingsTab extends State<SettingsTab> {
                                     ),
                                   ),
                                   _buildNumberField(
-                                    label: "Sonntag",
+                                    label: "Sunday",
                                     value: settings.sundayWorkHours,
                                     onChanged: (val) => _updateSettings(
                                       box,
