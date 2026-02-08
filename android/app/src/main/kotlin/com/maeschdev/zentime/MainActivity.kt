@@ -1,4 +1,4 @@
-package com.example.zentime
+package com.maeschdev.zentime
 
 import io.flutter.embedding.android.FlutterActivity
 
