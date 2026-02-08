@@ -35,6 +35,11 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+
+            // Stoppt das Entfernen von vermeintlich ungenutztem Code (R8).
+            isMinifyEnabled = false
+            // Verhindert, dass Ressourcen (Bilder etc.) entfernt werden.
+            isShrinkResources = false
         }
     }
 }
