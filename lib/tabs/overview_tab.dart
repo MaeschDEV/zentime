@@ -151,10 +151,6 @@ class _OverviewTab extends State<OverviewTab> {
     return '$h:$m';
   }
 
-  String _formatHours(double hours) {
-    return hours.toStringAsFixed(2);
-  }
-
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
@@ -229,7 +225,7 @@ class _OverviewTab extends State<OverviewTab> {
                                         ],
                                       ),
                                       LinearProgressIndicator(value: progress),
-                                      (remainingHours != 0.0)
+                                      (remainingHours != "0.0")
                                           ? Row(
                                               children: [
                                                 Text(
