@@ -196,18 +196,26 @@ class _OverviewTab extends State<OverviewTab> {
                                         ],
                                       ),
                                       LinearProgressIndicator(value: progress),
-                                      Row(
-                                        children: [
-                                          Text(
-                                            _formatHours(remainingHours),
-                                            style: theme.textTheme.bodyMedium,
-                                          ),
-                                          Text(
-                                            " hours remaining",
-                                            style: theme.textTheme.bodyMedium,
-                                          ),
-                                        ],
-                                      ),
+                                      (remainingHours != 0.0)
+                                          ? Row(
+                                              children: [
+                                                Text(
+                                                  _formatHours(remainingHours),
+                                                  style: theme
+                                                      .textTheme
+                                                      .bodyMedium,
+                                                ),
+                                                Text(
+                                                  " hours remaining",
+                                                  style: theme
+                                                      .textTheme
+                                                      .bodyMedium,
+                                                ),
+                                              ],
+                                            )
+                                          : Text(
+                                              "Finished Work for this week!",
+                                            ),
                                     ],
                                   );
                                 } else if (snapshot.hasError) {

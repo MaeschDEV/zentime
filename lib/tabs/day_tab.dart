@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:hive_ce_flutter/adapters.dart';
+import 'package:intl/intl.dart';
 import 'package:zentime/logic/settings.dart';
 import 'package:zentime/logic/week.dart';
 import 'package:zentime/logic/workday.dart';
@@ -128,6 +129,12 @@ class _DayTab extends State<DayTab> {
     final workedHours = workedDuration.inMinutes / 60.0;
     final remainingHours = (targetHours - workedHours).clamp(0.0, targetHours);
 
+    final clockOutTime = DateTime.now().add(
+      Duration(minutes: (remainingHours * 60).round()),
+    );
+
+    final clockOutTimeString = DateFormat('HH:mm').format(clockOutTime);
+
     double progress = 0.0;
 
     if (targetHours != 0) {
@@ -147,6 +154,7 @@ class _DayTab extends State<DayTab> {
       'breakDuration': breakDuration,
       'dayType': workDay?.dayType ?? DayType.work,
       'targetHours': targetHours,
+      'clockOutTime': clockOutTimeString,
     };
   }
 
@@ -566,6 +574,8 @@ class _DayTab extends State<DayTab> {
                                       data['workedHours'] as double;
                                   final remainingHours =
                                       data['remainingHours'] as double;
+                                  final clockOutTime =
+                                      data['clockOutTime'] as String;
                                   final progress = data['progress'] as double;
                                   final targetHours =
                                       data['targetHours'] as double;
@@ -591,18 +601,36 @@ class _DayTab extends State<DayTab> {
                                         ],
                                       ),
                                       LinearProgressIndicator(value: progress),
-                                      Row(
-                                        children: [
-                                          Text(
-                                            _formatHours(remainingHours),
-                                            style: theme.textTheme.bodyMedium,
-                                          ),
-                                          Text(
-                                            " hours remaining",
-                                            style: theme.textTheme.bodyMedium,
-                                          ),
-                                        ],
-                                      ),
+                                      (remainingHours != 0.0)
+                                          ? Row(
+                                              children: [
+                                                Text(
+                                                  _formatHours(remainingHours),
+                                                  style: theme
+                                                      .textTheme
+                                                      .bodyMedium,
+                                                ),
+                                                Text(
+                                                  " hours remaining - working until ",
+                                                  style: theme
+                                                      .textTheme
+                                                      .bodyMedium,
+                                                ),
+                                                Text(
+                                                  clockOutTime,
+                                                  style: theme
+                                                      .textTheme
+                                                      .bodyMedium,
+                                                ),
+                                                Text(
+                                                  ".",
+                                                  style: theme
+                                                      .textTheme
+                                                      .bodyMedium,
+                                                ),
+                                              ],
+                                            )
+                                          : Text("Finished Work for today!"),
                                     ],
                                   );
                                 } else if (snapshot.hasError) {

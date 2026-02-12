@@ -1,7 +1,7 @@
 name: zentime
 description: "A simple time tracking app."
 publish_to: "none"
-version: 1.0.0+2
+version: 1.0.0+3
 
 environment:
   sdk: ^3.9.2
@@ -14,6 +14,7 @@ dependencies:
   hive_ce: ^2.19.1
   hive_ce_flutter: ^2.3.4
   hive_ce_generator: ^1.11.1
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:
