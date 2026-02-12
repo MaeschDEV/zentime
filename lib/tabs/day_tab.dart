@@ -135,6 +135,15 @@ class _DayTab extends State<DayTab> {
     final targetHoursDuration = Duration(minutes: (targetHours * 60).round());
     final targetHoursString = _formatDurationHHmm(targetHoursDuration);
 
+    // Progress
+    double progress = 0.0;
+    if (targetHours != 0) {
+      progress = (workedDuration.inMinutes / 60.0 / targetHours).clamp(
+        0.0,
+        1.0,
+      );
+    }
+
     // Remaining Hours
     final remainingHours =
         (targetHoursDuration - workedDuration) < Duration.zero
@@ -146,15 +155,6 @@ class _DayTab extends State<DayTab> {
     final clockOutTime = DateTime.now().add(remainingHours);
     final clockOutTimeString = DateFormat('HH:mm').format(clockOutTime);
 
-    // Progress
-    double progress = 0.0;
-    if (targetHours != 0) {
-      progress = (workedDuration.inMinutes / 60.0 / targetHours).clamp(
-        0.0,
-        1.0,
-      );
-    }
-
     // Check max working Time
     if ((workedDuration.inMinutes / 60) >=
             (settingsBox.get('current')?.maxDailyWorkHours ?? 10) &&
@@ -165,9 +165,9 @@ class _DayTab extends State<DayTab> {
     return {
       'workedHours': workedHours,
       'targetHours': targetHoursString,
+      'progress': progress,
       'remainingHours': remainingHoursString,
       'clockOutTime': clockOutTimeString,
-      'progress': progress,
       'workedDuration': workedDuration,
       'breakDuration': breakDuration,
       'dayType': workDay?.dayType ?? DayType.work,
