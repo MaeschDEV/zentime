@@ -53,15 +53,17 @@ class _DayTab extends State<DayTab> {
     _loadButtonState();
   }
 
-  String _formatDuration(Duration d) {
+  String _formatDurationHHmmss(Duration d) {
     final h = d.inHours.toString().padLeft(2, '0');
     final m = (d.inMinutes.remainder(60)).toString().padLeft(2, '0');
     final s = (d.inSeconds.remainder(60)).toString().padLeft(2, '0');
     return '$h:$m:$s';
   }
 
-  String _formatHours(double hours) {
-    return hours.toStringAsFixed(2);
+  String _formatDurationHHmm(Duration d) {
+    final h = d.inHours.toString().padLeft(2, '0');
+    final m = (d.inMinutes.remainder(60)).toString().padLeft(2, '0');
+    return '$h:$m';
   }
 
   Future<void> _getBox() async {
@@ -122,39 +124,53 @@ class _DayTab extends State<DayTab> {
         targetHours = settingsBox.get('current')?.sundayWorkHours ?? 0.0;
         break;
       default:
-        targetHours = 100;
+        targetHours = 40;
         break;
     }
 
-    final workedHours = workedDuration.inMinutes / 60.0;
-    final remainingHours = (targetHours - workedHours).clamp(0.0, targetHours);
+    // Worked Hours
+    final workedHours = _formatDurationHHmm(workedDuration);
 
-    final clockOutTime = DateTime.now().add(
-      Duration(minutes: (remainingHours * 60).round()),
-    );
+    // Target Hours
+    final targetHoursDuration = Duration(minutes: (targetHours * 60).round());
+    final targetHoursString = _formatDurationHHmm(targetHoursDuration);
 
+    // Remaining Hours
+    final remainingHours =
+        (targetHoursDuration - workedDuration) < Duration.zero
+        ? Duration.zero
+        : targetHoursDuration - workedDuration;
+    final remainingHoursString = _formatDurationHHmm(remainingHours);
+
+    // Clockout Time
+    final clockOutTime = DateTime.now().add(remainingHours);
     final clockOutTimeString = DateFormat('HH:mm').format(clockOutTime);
 
+    // Progress
     double progress = 0.0;
-
     if (targetHours != 0) {
-      progress = (workedHours / targetHours).clamp(0.0, 1.0);
+      progress = (workedDuration.inMinutes / 60.0 / targetHours).clamp(
+        0.0,
+        1.0,
+      );
     }
 
-    if (workedHours >= (settingsBox.get('current')?.maxDailyWorkHours ?? 10) &&
+    // Check max working Time
+    if ((workedDuration.inMinutes / 60) >=
+            (settingsBox.get('current')?.maxDailyWorkHours ?? 10) &&
         checkInEnabled) {
       _handleCheckOut();
     }
 
     return {
       'workedHours': workedHours,
-      'remainingHours': remainingHours,
+      'targetHours': targetHoursString,
+      'remainingHours': remainingHoursString,
+      'clockOutTime': clockOutTimeString,
       'progress': progress,
       'workedDuration': workedDuration,
       'breakDuration': breakDuration,
       'dayType': workDay?.dayType ?? DayType.work,
-      'targetHours': targetHours,
-      'clockOutTime': clockOutTimeString,
     };
   }
 
@@ -571,14 +587,14 @@ class _DayTab extends State<DayTab> {
                                   }
 
                                   final workedHours =
-                                      data['workedHours'] as double;
+                                      data['workedHours'] as String;
                                   final remainingHours =
-                                      data['remainingHours'] as double;
+                                      data['remainingHours'] as String;
                                   final clockOutTime =
                                       data['clockOutTime'] as String;
                                   final progress = data['progress'] as double;
                                   final targetHours =
-                                      data['targetHours'] as double;
+                                      data['targetHours'] as String;
 
                                   return Column(
                                     spacing: 8,
@@ -587,7 +603,7 @@ class _DayTab extends State<DayTab> {
                                         spacing: 8,
                                         children: [
                                           Text(
-                                            _formatHours(workedHours),
+                                            workedHours,
                                             style: theme.textTheme.bodyLarge,
                                           ),
                                           Text(
@@ -595,17 +611,17 @@ class _DayTab extends State<DayTab> {
                                             style: theme.textTheme.bodyLarge,
                                           ),
                                           Text(
-                                            _formatHours(targetHours),
+                                            targetHours,
                                             style: theme.textTheme.bodyLarge,
                                           ),
                                         ],
                                       ),
                                       LinearProgressIndicator(value: progress),
-                                      (remainingHours != 0.0)
+                                      (remainingHours != "00:00")
                                           ? Row(
                                               children: [
                                                 Text(
-                                                  _formatHours(remainingHours),
+                                                  remainingHours,
                                                   style: theme
                                                       .textTheme
                                                       .bodyMedium,
@@ -687,7 +703,7 @@ class _DayTab extends State<DayTab> {
                           Row(
                             children: [
                               Text(
-                                _formatDuration(duration),
+                                _formatDurationHHmmss(duration),
                                 style: theme.textTheme.displayLarge,
                               ),
                             ],
@@ -714,7 +730,7 @@ class _DayTab extends State<DayTab> {
                           Row(
                             children: [
                               Text(
-                                _formatDuration(duration),
+                                _formatDurationHHmmss(duration),
                                 style: theme.textTheme.displaySmall,
                               ),
                             ],
