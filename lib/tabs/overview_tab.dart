@@ -42,9 +42,10 @@ class _OverviewTab extends State<OverviewTab> {
     Duration totalWorkedDuration = Duration.zero;
     double targetHours = settingsBox.get('current')?.weeklyWorkHours ?? 40.0;
     List<Duration> dailyDurations = List.filled(7, Duration.zero);
-    List<double> dailyHours = List.filled(7, 0.0);
+    List<String> dailyHours = List.filled(7, "");
     List<DayType> dayTypes = List.filled(7, DayType.work);
     List<double> dailyTargetHours = List.filled(7, 8.0);
+    List<String> dailyTargetHoursString = List.filled(7, "");
 
     // Loop through each day of the week (Monday to Sunday)
     for (int i = 0; i < 7; i++) {
@@ -98,28 +99,56 @@ class _OverviewTab extends State<OverviewTab> {
       }
     }
 
-    final workedHours = totalWorkedDuration.inMinutes / 60.0;
+    // Worked Hours
+    final workedHours = _formatDurationHHmm(totalWorkedDuration);
 
-    for (int i = 0; i < dailyDurations.length; i++) {
-      dailyHours[i] = dailyDurations[i].inMinutes / 60.0;
+    // Target Hours
+    final targetHoursDuration = Duration(minutes: (targetHours * 60).round());
+    final targetHoursString = _formatDurationHHmm(targetHoursDuration);
+
+    // Progress
+    double progress = 0.0;
+    if (targetHours != 0) {
+      progress = (totalWorkedDuration.inMinutes / 60.0 / targetHours).clamp(
+        0.0,
+        1.0,
+      );
     }
 
-    final remainingHours = (targetHours - workedHours).clamp(0.0, targetHours);
-    final progress = (workedHours / targetHours).clamp(0.0, 1.0);
+    // Remaining Hours
+    final remainingHours =
+        (targetHoursDuration - totalWorkedDuration) < Duration.zero
+        ? Duration.zero
+        : targetHoursDuration - totalWorkedDuration;
+    final remainingHoursString = _formatDurationHHmm(remainingHours);
+
+    // Daily Hours
+    for (int i = 0; i < dailyDurations.length; i++) {
+      dailyHours[i] = _formatDurationHHmm(dailyDurations[i]);
+    }
+
+    // Daily target Hours
+    for (int i = 0; i < dailyTargetHours.length; i++) {
+      dailyTargetHoursString[i] = _formatDurationHHmm(
+        Duration(minutes: (dailyTargetHours[i] * 60).round()),
+      );
+    }
 
     return {
       'workedHours': workedHours,
-      'dailyHours': dailyHours,
-      'targetHours': targetHours,
-      'dayTypes': dayTypes,
-      'remainingHours': remainingHours,
+      'targetHours': targetHoursString,
       'progress': progress,
-      'dailyTargetHours': dailyTargetHours,
+      'remainingHours': remainingHoursString,
+      'dailyHours': dailyHours,
+      'dailyTargetHours': dailyTargetHoursString,
+      'dayTypes': dayTypes,
     };
   }
 
-  String _formatHours(double hours) {
-    return hours.toStringAsFixed(2);
+  String _formatDurationHHmm(Duration d) {
+    final h = d.inHours.toString().padLeft(2, '0');
+    final m = (d.inMinutes.remainder(60)).toString().padLeft(2, '0');
+    return '$h:$m';
   }
 
   @override
@@ -168,12 +197,12 @@ class _OverviewTab extends State<OverviewTab> {
                                 if (snapshot.hasData) {
                                   final data = snapshot.data!;
                                   final workedHours =
-                                      data['workedHours'] as double;
+                                      data['workedHours'] as String;
                                   final remainingHours =
-                                      data['remainingHours'] as double;
+                                      data['remainingHours'] as String;
                                   final progress = data['progress'] as double;
                                   final targetHours =
-                                      data['targetHours'] as double;
+                                      data['targetHours'] as String;
 
                                   return Column(
                                     spacing: 8,
@@ -182,7 +211,7 @@ class _OverviewTab extends State<OverviewTab> {
                                         spacing: 8,
                                         children: [
                                           Text(
-                                            _formatHours(workedHours),
+                                            workedHours,
                                             style: theme.textTheme.bodyLarge,
                                           ),
                                           Text(
@@ -190,24 +219,32 @@ class _OverviewTab extends State<OverviewTab> {
                                             style: theme.textTheme.bodyLarge,
                                           ),
                                           Text(
-                                            _formatHours(targetHours),
+                                            targetHours,
                                             style: theme.textTheme.bodyLarge,
                                           ),
                                         ],
                                       ),
                                       LinearProgressIndicator(value: progress),
-                                      Row(
-                                        children: [
-                                          Text(
-                                            _formatHours(remainingHours),
-                                            style: theme.textTheme.bodyMedium,
-                                          ),
-                                          Text(
-                                            " hours remaining",
-                                            style: theme.textTheme.bodyMedium,
-                                          ),
-                                        ],
-                                      ),
+                                      (remainingHours != "0.0")
+                                          ? Row(
+                                              children: [
+                                                Text(
+                                                  remainingHours,
+                                                  style: theme
+                                                      .textTheme
+                                                      .bodyMedium,
+                                                ),
+                                                Text(
+                                                  " hours remaining",
+                                                  style: theme
+                                                      .textTheme
+                                                      .bodyMedium,
+                                                ),
+                                              ],
+                                            )
+                                          : Text(
+                                              "Finished Work for this week!",
+                                            ),
                                     ],
                                   );
                                 } else if (snapshot.hasError) {
@@ -287,16 +324,16 @@ class _OverviewTab extends State<OverviewTab> {
                                         }
 
                                         final dailyHours =
-                                            data['dailyHours'] as List<double>;
+                                            data['dailyHours'] as List<String>;
                                         final targetHours =
                                             data['dailyTargetHours']
-                                                as List<double>;
+                                                as List<String>;
 
                                         return Row(
                                           spacing: 8,
                                           children: [
                                             Text(
-                                              _formatHours(dailyHours[0]),
+                                              dailyHours[0],
                                               style: theme.textTheme.bodyLarge,
                                             ),
                                             Text(
@@ -304,7 +341,7 @@ class _OverviewTab extends State<OverviewTab> {
                                               style: theme.textTheme.bodyLarge,
                                             ),
                                             Text(
-                                              _formatHours(targetHours[0]),
+                                              targetHours[0],
                                               style: theme.textTheme.bodyLarge,
                                             ),
                                           ],
@@ -386,16 +423,16 @@ class _OverviewTab extends State<OverviewTab> {
                                         }
 
                                         final dailyHours =
-                                            data['dailyHours'] as List<double>;
+                                            data['dailyHours'] as List<String>;
                                         final targetHours =
                                             data['dailyTargetHours']
-                                                as List<double>;
+                                                as List<String>;
 
                                         return Row(
                                           spacing: 8,
                                           children: [
                                             Text(
-                                              _formatHours(dailyHours[1]),
+                                              dailyHours[1],
                                               style: theme.textTheme.bodyLarge,
                                             ),
                                             Text(
@@ -403,7 +440,7 @@ class _OverviewTab extends State<OverviewTab> {
                                               style: theme.textTheme.bodyLarge,
                                             ),
                                             Text(
-                                              _formatHours(targetHours[1]),
+                                              targetHours[1],
                                               style: theme.textTheme.bodyLarge,
                                             ),
                                           ],
@@ -490,16 +527,16 @@ class _OverviewTab extends State<OverviewTab> {
                                         }
 
                                         final dailyHours =
-                                            data['dailyHours'] as List<double>;
+                                            data['dailyHours'] as List<String>;
                                         final targetHours =
                                             data['dailyTargetHours']
-                                                as List<double>;
+                                                as List<String>;
 
                                         return Row(
                                           spacing: 8,
                                           children: [
                                             Text(
-                                              _formatHours(dailyHours[2]),
+                                              dailyHours[2],
                                               style: theme.textTheme.bodyLarge,
                                             ),
                                             Text(
@@ -507,7 +544,7 @@ class _OverviewTab extends State<OverviewTab> {
                                               style: theme.textTheme.bodyLarge,
                                             ),
                                             Text(
-                                              _formatHours(targetHours[2]),
+                                              targetHours[2],
                                               style: theme.textTheme.bodyLarge,
                                             ),
                                           ],
@@ -589,16 +626,16 @@ class _OverviewTab extends State<OverviewTab> {
                                         }
 
                                         final dailyHours =
-                                            data['dailyHours'] as List<double>;
+                                            data['dailyHours'] as List<String>;
                                         final targetHours =
                                             data['dailyTargetHours']
-                                                as List<double>;
+                                                as List<String>;
 
                                         return Row(
                                           spacing: 8,
                                           children: [
                                             Text(
-                                              _formatHours(dailyHours[3]),
+                                              dailyHours[3],
                                               style: theme.textTheme.bodyLarge,
                                             ),
                                             Text(
@@ -606,7 +643,7 @@ class _OverviewTab extends State<OverviewTab> {
                                               style: theme.textTheme.bodyLarge,
                                             ),
                                             Text(
-                                              _formatHours(targetHours[3]),
+                                              targetHours[3],
                                               style: theme.textTheme.bodyLarge,
                                             ),
                                           ],
@@ -694,16 +731,16 @@ class _OverviewTab extends State<OverviewTab> {
                                         }
 
                                         final dailyHours =
-                                            data['dailyHours'] as List<double>;
+                                            data['dailyHours'] as List<String>;
                                         final targetHours =
                                             data['dailyTargetHours']
-                                                as List<double>;
+                                                as List<String>;
 
                                         return Row(
                                           spacing: 8,
                                           children: [
                                             Text(
-                                              _formatHours(dailyHours[4]),
+                                              dailyHours[4],
                                               style: theme.textTheme.bodyLarge,
                                             ),
                                             Text(
@@ -711,7 +748,7 @@ class _OverviewTab extends State<OverviewTab> {
                                               style: theme.textTheme.bodyLarge,
                                             ),
                                             Text(
-                                              _formatHours(targetHours[4]),
+                                              targetHours[4],
                                               style: theme.textTheme.bodyLarge,
                                             ),
                                           ],
@@ -794,16 +831,16 @@ class _OverviewTab extends State<OverviewTab> {
                                         }
 
                                         final dailyHours =
-                                            data['dailyHours'] as List<double>;
+                                            data['dailyHours'] as List<String>;
                                         final targetHours =
                                             data['dailyTargetHours']
-                                                as List<double>;
+                                                as List<String>;
 
                                         return Row(
                                           spacing: 8,
                                           children: [
                                             Text(
-                                              _formatHours(dailyHours[5]),
+                                              dailyHours[5],
                                               style: theme.textTheme.bodyLarge,
                                             ),
                                             Text(
@@ -811,7 +848,7 @@ class _OverviewTab extends State<OverviewTab> {
                                               style: theme.textTheme.bodyLarge,
                                             ),
                                             Text(
-                                              _formatHours(targetHours[5]),
+                                              targetHours[5],
                                               style: theme.textTheme.bodyLarge,
                                             ),
                                           ],
@@ -899,16 +936,16 @@ class _OverviewTab extends State<OverviewTab> {
                                         }
 
                                         final dailyHours =
-                                            data['dailyHours'] as List<double>;
+                                            data['dailyHours'] as List<String>;
                                         final targetHours =
                                             data['dailyTargetHours']
-                                                as List<double>;
+                                                as List<String>;
 
                                         return Row(
                                           spacing: 8,
                                           children: [
                                             Text(
-                                              _formatHours(dailyHours[6]),
+                                              dailyHours[6],
                                               style: theme.textTheme.bodyLarge,
                                             ),
                                             Text(
@@ -916,7 +953,7 @@ class _OverviewTab extends State<OverviewTab> {
                                               style: theme.textTheme.bodyLarge,
                                             ),
                                             Text(
-                                              _formatHours(targetHours[6]),
+                                              targetHours[6],
                                               style: theme.textTheme.bodyLarge,
                                             ),
                                           ],

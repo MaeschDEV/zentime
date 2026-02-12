@@ -22,7 +22,7 @@ class _SettingsTab extends State<SettingsTab> {
       trailing: SizedBox(
         width: 100,
         child: TextFormField(
-          key: Key('field_$label\_$value'),
+          key: Key('field_${label}_$value'),
           initialValue: value.toString(),
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           textAlign: TextAlign.end,
