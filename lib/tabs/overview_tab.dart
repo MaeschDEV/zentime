@@ -225,7 +225,7 @@ class _OverviewTab extends State<OverviewTab> {
                                         ],
                                       ),
                                       LinearProgressIndicator(value: progress),
-                                      (remainingHours != "0.0")
+                                      (remainingHours != "00:00")
                                           ? Row(
                                               children: [
                                                 Text(
