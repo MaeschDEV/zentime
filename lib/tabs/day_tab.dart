@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:zentime/logic/settings.dart';
 import 'package:zentime/logic/week.dart';
 import 'package:zentime/logic/workday.dart';
+import 'package:zentime/main.dart';
 
 class DayTab extends StatefulWidget {
   const DayTab({super.key});
